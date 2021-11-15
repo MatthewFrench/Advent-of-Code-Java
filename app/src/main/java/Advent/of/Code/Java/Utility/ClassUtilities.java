@@ -37,26 +37,22 @@ public class ClassUtilities {
             // Sort the values by year and day so they are in order
             final int class1Day = Integer.parseInt(
                     Iterables.getLast(
-                            StringUtilities.splitStringIntoList(
-                                    StringUtilities.splitStringIntoList(class1.getPackageName(), "@").get(0)
-                                    , "_")
+                            StringUtilities.splitStringIntoList(class1.getCanonicalName(), "_")
                     )
             );
             final int class2Day = Integer.parseInt(
                     Iterables.getLast(
-                            StringUtilities.splitStringIntoList(
-                                    StringUtilities.splitStringIntoList(class2.getPackageName(), "@").get(0)
-                                    , "_")
+                            StringUtilities.splitStringIntoList(class2.getCanonicalName(), "_")
                     )
             );
             final int class1Year = Integer.parseInt(
                     StringUtilities.splitStringIntoList(
-                            Iterables.getLast(StringUtilities.splitStringIntoList(class1.getPackageName(), ".Year_"))
+                            Iterables.getLast(StringUtilities.splitStringIntoList(class1.getCanonicalName(), ".Year_"))
                             , ".").get(0)
             );
             final int class2Year = Integer.parseInt(
                     StringUtilities.splitStringIntoList(
-                            Iterables.getLast(StringUtilities.splitStringIntoList(class2.getPackageName(), ".Year_"))
+                            Iterables.getLast(StringUtilities.splitStringIntoList(class2.getCanonicalName(), ".Year_"))
                             , ".").get(0)
             );
             if (class1Year != class2Year) {
