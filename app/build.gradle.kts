@@ -20,6 +20,7 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-databind:2.13.0")
     implementation("org.reflections:reflections:0.10.2")
     implementation("org.slf4j:slf4j-simple:1.7.32")
+    implementation("org.javatuples:javatuples:1.2")
 
     compileOnly("org.projectlombok:lombok:1.18.22")
     annotationProcessor("org.projectlombok:lombok:1.18.22")

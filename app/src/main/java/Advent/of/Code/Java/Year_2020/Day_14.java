@@ -26,7 +26,7 @@ public class Day_14 implements Day {
                 var memoryLocation = Integer.parseInt(split1.substring(0, split1.indexOf("]")));
                 long decimalValue = Long.parseLong(StringUtilities.splitStringIntoList(compute, " = ").get(1));
                 String bitRepresentation = Long.toBinaryString(decimalValue);
-                LogUtilities.log("Bit rep: " + bitRepresentation);
+                //LogUtilities.log("Bit rep: " + bitRepresentation);
                 var finalString = "";
                 for (var i = 0; i < mask.length(); i++) {
                     var character = StringUtilities.getStringChunk(mask, (mask.length() - 1) - i, 1);
