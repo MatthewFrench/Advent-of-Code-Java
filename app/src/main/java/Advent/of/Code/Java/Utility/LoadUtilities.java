@@ -36,7 +36,7 @@ public class LoadUtilities {
                         final File file = new File(path);
                         if (file.isFile()) {
                             filenames.add(name);
-                        } else {
+                        } else if (file.isDirectory()) {
                             filenames.addAll(getFilesInFolder(name));
                         }
                     }

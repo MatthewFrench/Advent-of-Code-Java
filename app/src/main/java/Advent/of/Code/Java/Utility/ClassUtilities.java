@@ -17,7 +17,13 @@ public class ClassUtilities {
     }
 
     public static Day getSpecificDay(final String year, final String day) throws Exception {
-        return getDayClassInstances("Advent.of.Code.Java.Year_" + year + ".Day_" + day).get(0);
+        final List<Day> days = getDayClassInstances("Advent.of.Code.Java.Year_" + year);
+        for (final Day dayObject : days) {
+            if (dayObject.getClass().getName().endsWith(day)) {
+                return dayObject;
+            }
+        }
+        return null;
     }
 
     public static List<Day> getDayClassInstances(final String prefix) throws Exception {
