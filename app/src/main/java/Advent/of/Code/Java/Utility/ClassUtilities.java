@@ -1,6 +1,7 @@
 package Advent.of.Code.Java.Utility;
 
 import Advent.of.Code.Java.Utility.Structures.Day;
+import Advent.of.Code.Java.Utility.Structures.DayWithExecute;
 import com.google.common.collect.Iterables;
 import org.reflections.Reflections;
 
@@ -39,7 +40,7 @@ public class ClassUtilities {
     // Like "*Year_{1}.Day_{2}.*" and it returns a list with 1 and 2
     public static List<Class<? extends Day>> getDayClasses(final String prefix) {
         Reflections reflections = new Reflections(prefix);
-        return reflections.getSubTypesOf(Day.class).stream().sorted((class1, class2) -> {
+        return reflections.getSubTypesOf(Day.class).stream().filter(aClass -> aClass != DayWithExecute.class).sorted((class1, class2) -> {
             // Sort the values by year and day so they are in order
             final int class1Day = Integer.parseInt(
                     Iterables.getLast(

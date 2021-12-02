@@ -1,16 +1,22 @@
 package Advent.of.Code.Java.Year_2021;
 
+import Advent.of.Code.Java.Utility.DayUtilities;
 import Advent.of.Code.Java.Utility.LoadUtilities;
 import Advent.of.Code.Java.Utility.LogUtilities;
 import Advent.of.Code.Java.Utility.StringUtilities;
 import Advent.of.Code.Java.Utility.Structures.Day;
+import Advent.of.Code.Java.Utility.Structures.DayWithExecute;
 
 import java.util.List;
 
-public class Day_2 implements Day {
+public class Day_2 implements DayWithExecute {
     public void run() throws Exception {
+        DayUtilities.run("input/2021/2/", this);
+    }
+
+    public void executeWithInput(final String fileName) throws Exception {
         {
-            final List<String> input = LoadUtilities.loadTextFileAsList("input/2021/2/input.txt");
+            final List<String> input = LoadUtilities.loadTextFileAsList(fileName);
             long x = 0;
             long y = 0;
             for (final String instruction : input) {
@@ -32,7 +38,7 @@ public class Day_2 implements Day {
         }
 
         {
-            final List<String> input = LoadUtilities.loadTextFileAsList("input/2021/2/input.txt");
+            final List<String> input = LoadUtilities.loadTextFileAsList(fileName);
             long x = 0;
             long y = 0;
             long aim = 0;

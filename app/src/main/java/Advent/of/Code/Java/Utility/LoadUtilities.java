@@ -74,4 +74,8 @@ public class LoadUtilities {
     public static <R> List<R> loadTextFileAsTypeList(final String name, Function<? super String, ? extends R> mapperFunction) throws Exception {
         return loadTextFileStream(name).map(mapperFunction).collect(Collectors.toList());
     }
+
+    public static boolean isFileEmpty(final String name) throws Exception {
+        return loadTextFileAsString(name).isEmpty();
+    }
 }
