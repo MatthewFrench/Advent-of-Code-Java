@@ -10,4 +10,7 @@ public class NumberUtilities {
         }
         return sum;
     }
+    public static long numberFromBinaryString(final String value) {
+        return Long.parseLong(value, 2);
+    }
 }

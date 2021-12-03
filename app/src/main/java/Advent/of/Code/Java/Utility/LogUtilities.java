@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Stopwatch;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -42,13 +44,19 @@ public class LogUtilities {
     public static void error(final String text) {
         final int currentIndent = INDENT;
         logExecutorService.submit(()-> System.err.println(getIndentedText(currentIndent, text)));
+        logRed(text);
     }
     private static String getIndentedText(final int indent, final String text) {
         return "\t".repeat(Math.max(0, indent)) + text;
     }
     public static void error(final String text, final Exception e) {
         error(text);
-        error(e.toString());
+        indent();
+        final StringWriter sw = new StringWriter();
+        final PrintWriter pw = new PrintWriter(sw);
+        e.printStackTrace(pw);
+        error(sw.toString());
+        unIndent();
     }
     public static void indent() {
         INDENT += 1;
