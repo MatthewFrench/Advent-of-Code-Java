@@ -33,7 +33,6 @@ public class Day_9 implements DayWithExecute {
                 currentY += 1;
             }
 
-            final List<Long> lowPoints = new ArrayList<>();
             long totalCount = 0;
             for (int x = 0; x < width; x++) {
                 for (int y = 0; y < height; y++) {
@@ -57,7 +56,6 @@ public class Day_9 implements DayWithExecute {
             LogUtilities.logGreen("Solution: " + totalCount);
         }
         {
-
             final List<String> input = LoadUtilities.loadTextFileAsList(fileName);
 
             int height = input.size();
