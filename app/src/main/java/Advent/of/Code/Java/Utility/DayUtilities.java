@@ -7,12 +7,16 @@ public class DayUtilities {
         if (!LoadUtilities.isFileEmpty(prefix + "sample.txt")) {
             LogUtilities.logBlue("Sample");
             LogUtilities.indent();
+            LogUtilities.startTiming("Sample");
             day.executeWithInput(prefix + "sample.txt");
+            LogUtilities.endTiming("Sample");
             LogUtilities.unIndent();
         }
         LogUtilities.logPurple("Input");
         LogUtilities.indent();
+        LogUtilities.startTiming("Input");
         day.executeWithInput(prefix + "input.txt");
+        LogUtilities.endTiming("Input");
         LogUtilities.unIndent();
     }
 }
