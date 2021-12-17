@@ -1,10 +1,14 @@
 package Advent.of.Code.Java.Utility;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
 public class StringUtilities {
+    final static ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     public static List<String> splitStringIntoList(final String target, final String splitBy) {
         return Arrays.asList(target.split(Pattern.quote(splitBy)).clone());
     }
@@ -31,5 +35,12 @@ public class StringUtilities {
     }
     public static String removeStartChunk(final String target, final String chunk) {
         return getStringChunk(target, chunk.length(), target.length() - chunk.length());
+    }
+    public static String objectToString(final Object object) {
+        try {
+            return OBJECT_MAPPER.writeValueAsString(object);
+        } catch (final JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
