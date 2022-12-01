@@ -13,3 +13,5 @@ How to run a year:
 
 How to run all:  
 `gradle run`
+
+This uses Java 17 and Java 17 features. Please use the correct SDK or it will not compile.
