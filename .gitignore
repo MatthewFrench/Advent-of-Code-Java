@@ -31,3 +31,5 @@ build
 .idea/
 .gitconfig
 app/src/main/resources/input/.DS_Store
+
+.DS_Store

@@ -42,6 +42,7 @@ public class Day_1 implements DayWithExecute {
                 currentElf.addItem(Long.parseLong(item));
             }
         }
+        elves.add(currentElf);
 
         elves.sort(Comparator.comparingLong(Elf::getCount).reversed());
 
