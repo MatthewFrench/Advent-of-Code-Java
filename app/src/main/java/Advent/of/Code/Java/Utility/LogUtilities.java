@@ -46,7 +46,7 @@ public class LogUtilities {
         logExecutorService.submit(()-> System.err.println(getIndentedText(currentIndent, text)));
         logRed(text);
     }
-    private static String getIndentedText(final int indent, final String text) {
+    public static String getIndentedText(final int indent, final String text) {
         return "\t".repeat(Math.max(0, indent)) + text;
     }
     public static void error(final String text, final Exception e) {
