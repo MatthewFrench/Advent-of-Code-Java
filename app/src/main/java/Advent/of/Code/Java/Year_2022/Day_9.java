@@ -19,7 +19,6 @@ public class Day_9 implements DayWithExecute {
     }
 
     public void executeWithInput(final String fileName) throws Exception {
-        // Find all of the directories with a total size of at most 100,000. What is the sum of the total sizes of those directories?
         final List<String> inputRows = StringUtilities.splitStringIntoList(LoadUtilities.loadTextFileAsString(fileName), "\n");
 
         {
