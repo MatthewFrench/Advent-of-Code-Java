@@ -1,9 +1,10 @@
 # Advent-of-Code-Java
 Repo to hold all advent of code years and days for Java.  
-2018: Not completed  
-2019: Not completed  
-2020: Not completed  
-2021: Not completed  
+2018: Up to day 5 added  
+2019: Not added  
+2020: Completed  
+2021: Up to day 18 completed  
+2022: In progress  
 
 How to run a day:  
 `gradle run --args "2020 1"`
