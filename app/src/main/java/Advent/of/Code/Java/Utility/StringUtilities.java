@@ -3,6 +3,7 @@ package Advent.of.Code.Java.Utility;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -10,7 +11,7 @@ import java.util.regex.Pattern;
 public class StringUtilities {
     final static ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     public static List<String> splitStringIntoList(final String target, final String splitBy) {
-        return Arrays.asList(target.split(Pattern.quote(splitBy)).clone());
+        return new ArrayList<>(Arrays.asList(target.split(Pattern.quote(splitBy)).clone()));
     }
     public static String getStringChunk(final String target, final int index, final int length) {
         return target.substring(index, index + length);
@@ -42,5 +43,31 @@ public class StringUtilities {
         } catch (final JsonProcessingException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static String getFirstMatchingValue(final String searchString, final List<String> valuesToSearchFor) {
+        String foundValue = null;
+        Integer foundLocation = null;
+        for (final String value : valuesToSearchFor) {
+            final int indexOfValue = searchString.indexOf(value);
+            if (indexOfValue != -1 && (foundLocation == null || indexOfValue < foundLocation)) {
+                foundLocation = indexOfValue;
+                foundValue = value;
+            }
+        }
+        return foundValue;
+    }
+
+    public static String getLastMatchingValue(final String searchString, final List<String> valuesToSearchFor) {
+        String foundValue = null;
+        Integer foundLocation = null;
+        for (final String value : valuesToSearchFor) {
+            final int indexOfValue = searchString.lastIndexOf(value);
+            if (indexOfValue != -1 && (foundLocation == null || indexOfValue > foundLocation)) {
+                foundLocation = indexOfValue;
+                foundValue = value;
+            }
+        }
+        return foundValue;
     }
 }

@@ -13,4 +13,16 @@ public class NumberUtilities {
     public static long numberFromBinaryString(final String value) {
         return Long.parseLong(value, 2);
     }
+
+    public static boolean isInteger(String value) {
+        if (value == null) {
+            return false;
+        }
+        try {
+            int d = Integer.parseInt(value);
+        } catch (NumberFormatException nfe) {
+            return false;
+        }
+        return true;
+    }
 }
