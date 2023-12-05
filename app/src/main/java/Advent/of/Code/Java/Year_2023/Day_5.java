@@ -5,18 +5,17 @@ import Advent.of.Code.Java.Utility.DayUtilities;
 import Advent.of.Code.Java.Utility.LoadUtilities;
 import Advent.of.Code.Java.Utility.LogUtilities;
 import Advent.of.Code.Java.Utility.NumberUtilities;
+import Advent.of.Code.Java.Utility.SimpleParallelism;
 import Advent.of.Code.Java.Utility.StringUtilities;
 import Advent.of.Code.Java.Utility.Structures.DayWithExecute;
 
 import java.text.NumberFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class Day_5 implements DayWithExecute {
     public void run() throws Exception {
@@ -29,7 +28,7 @@ public class Day_5 implements DayWithExecute {
     }
     final static NumberFormat myFormat = NumberFormat.getInstance();
 
-    private List<String> MAPPING_ORDER = DataUtilities.List("seed-to-soil", "soil-to-fertilizer", "fertilizer-to-water", "water-to-light", "light-to-temperature", "temperature-to-humidity", "humidity-to-location");
+    private final List<String> MAPPING_ORDER = DataUtilities.List("seed-to-soil", "soil-to-fertilizer", "fertilizer-to-water", "water-to-light", "light-to-temperature", "temperature-to-humidity", "humidity-to-location");
 
     private void runSolution1(final String fileName) throws Exception {
         final List<String> input = LoadUtilities.loadTextFileAsList(fileName);
@@ -51,8 +50,7 @@ public class Day_5 implements DayWithExecute {
         for (final Long seed : seeds) {
             seedToLocation.put(seed, calculateValue(seed, mappings));
         }
-        // Todo add get minimum from list function
-        long minimumValue = seedToLocation.values().stream().min(Long::compareTo).get();
+        long minimumValue = NumberUtilities.min(seedToLocation.values());
 
         LogUtilities.logGreen("Solution 1: " + minimumValue);
     }
@@ -60,7 +58,7 @@ public class Day_5 implements DayWithExecute {
     private void runSolution2(final String fileName) throws Exception {
         final List<String> input = LoadUtilities.loadTextFileAsList(fileName);
 
-        Long minimumSeedLocation = null;
+        AtomicReference<Long> minimumSeedLocation = new AtomicReference<>(null);
 
         // Parse mappings
         final Map<String, Mapping> mappings = getMappings(input);
@@ -70,7 +68,9 @@ public class Day_5 implements DayWithExecute {
             final List<String> seedValues = StringUtilities.splitStringIntoList(StringUtilities.splitStringIntoList(input.get(0), ": ").get(1), " ");
             Long seedStart = null;
             int seedCount = 0;
-            // Todo: Add an easy way to parallelize calculating over a list of values
+            // Parallelize the processing
+            final SimpleParallelism simpleParallelism = new SimpleParallelism(seedValues.size());
+
             for (final String seedValue : seedValues) {
                 LogUtilities.indent();
                 LogUtilities.logBlue("Seed range progress: " + (seedCount) + " / " + (seedValues.size()));
@@ -81,37 +81,51 @@ public class Day_5 implements DayWithExecute {
                     long seedEnd = seedStart + Long.parseLong(seedValue);
                     LogUtilities.indent();
                     LogUtilities.logPurple("Number in range: " + myFormat.format(seedEnd - seedStart));
-                    for (long toAdd = seedStart; toAdd < seedEnd; toAdd++) {
-                        final long seedLocation = calculateValue(toAdd, mappings);
-                        if (minimumSeedLocation == null || seedLocation < minimumSeedLocation) {
-                            minimumSeedLocation = seedLocation;
-                            LogUtilities.logRed("New lowest seed: " + minimumSeedLocation);
+                    final long seedStartCopy = seedStart;
+                    simpleParallelism.add(() -> {
+                        Long currentLowest = null;
+                        for (long toAdd = seedStartCopy; toAdd < seedEnd; toAdd++) {
+                            final long seedLocation = calculateValue(toAdd, mappings);
+                            if (currentLowest == null || seedLocation < currentLowest) {
+                                currentLowest = seedLocation;
+                            }
                         }
-                    }
+                        final long currentLowestCopy = currentLowest;
+                        minimumSeedLocation.updateAndGet((currentValue)->{
+                            if (currentValue == null || currentLowestCopy < currentValue) {
+                                LogUtilities.logRed("New lowest seed: " + currentLowestCopy);
+                                return currentLowestCopy;
+                            }
+                            return currentValue;
+                        });
+                    });
                     seedStart = null;
                     LogUtilities.unIndent();
                 }
                 LogUtilities.unIndent();
             }
+            simpleParallelism.waitForCompletion();
         }
 
-        LogUtilities.logGreen("Solution 2: " + minimumSeedLocation);
-        // Todo: Add a number utility for getting the minimum number
+        LogUtilities.logGreen("Solution 2: " + minimumSeedLocation.get());
     }
 
     private long calculateValue(final long seed, final Map<String, Mapping> mappings) {
         long currentSeedValue = seed;
-        mappingLoop:
         for (final String mapName : MAPPING_ORDER) {
             final Mapping mapping = mappings.get(mapName);
-            // Todo: Add a binary search list function that should make this very fast based on a comparator
-            // assuming the list is already sorted
-            //Collections.binarySearch(mapping.mappingRanges, currentSeedValue);
-            for (final MappingRange range : mapping.mappingRanges) {
-                if (currentSeedValue >= range.sourceStart && currentSeedValue < range.sourceEnd) {
-                    currentSeedValue = currentSeedValue - range.sourceStart + range.destinationStart;
-                    continue mappingLoop;
+            final long currentSeedValueCopy = currentSeedValue;
+            final MappingRange range = DataUtilities.binarySearchSortedList(mapping.mappingRanges, (compareRange) -> {
+                if (currentSeedValueCopy >= compareRange.sourceStart && currentSeedValueCopy < compareRange.sourceEnd) {
+                    return 0;
                 }
+                if (currentSeedValueCopy < compareRange.sourceStart) {
+                    return 1;
+                }
+                return -1;
+            });
+            if (range != null) {
+                currentSeedValue = currentSeedValue - range.sourceStart + range.destinationStart;
             }
         }
         return currentSeedValue;
@@ -154,12 +168,12 @@ public class Day_5 implements DayWithExecute {
         return mappings;
     }
 
-    private class Mapping {
+    private static class Mapping {
         String mappingName;
         List<MappingRange> mappingRanges = new ArrayList<>();
     }
 
-    private class MappingRange {
+    private static class MappingRange {
         Long sourceStart;
         Long sourceEnd;
         Long destinationStart;

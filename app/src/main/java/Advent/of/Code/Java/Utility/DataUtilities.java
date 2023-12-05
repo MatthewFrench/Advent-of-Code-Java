@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -58,5 +59,31 @@ public class DataUtilities {
                 .reduce((first, second) ->
                         first.stream().filter(second::contains).collect(Collectors.toSet()))
                 .orElse(new HashSet<>());
+    }
+
+    /**
+     * Searches a sorted list, looking for the matching item from the searchFunction.
+     * @param sortedItems The sorted list, should be sorted to fit the search function.
+     * @param searchFunction Return 0 if the item matches, return 1 if we should search higher, return -1 if we should search lower
+     * @return The matching item to be returned.
+     * @param <T> This allows binary searching any type.
+     */
+    public static <T> T binarySearchSortedList(final List<T> sortedItems, Function<T, Integer> searchFunction) {
+        int low = 0;
+        int high = sortedItems.size() - 1;
+        int mid;
+        while (low <= high) {
+            mid = (low + high) / 2;
+            final T itemToCompare = sortedItems.get(mid);
+            final int comparatorValue = searchFunction.apply(itemToCompare);
+            if (comparatorValue > 0) {
+                high = mid - 1;
+            } else if (comparatorValue < 0) {
+                low = mid + 1;
+            } else {
+                return itemToCompare;
+            }
+        }
+        return null;
     }
 }

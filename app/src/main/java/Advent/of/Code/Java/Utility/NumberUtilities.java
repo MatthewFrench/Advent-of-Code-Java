@@ -1,14 +1,28 @@
 package Advent.of.Code.Java.Utility;
 
-import java.util.List;
+import java.util.Collection;
 
 public class NumberUtilities {
-    public static long sum(final List<Long> valueList) {
+    public static long sum(final Collection<Long> valueList) {
         long sum = 0;
         for (final Long value : valueList) {
             sum += value;
         }
         return sum;
+    }
+    public static long min(final Collection<Long> valueList) {
+        long min = valueList.stream().findFirst().get();
+        for (final Long value : valueList) {
+            min = Math.min(min, value);
+        }
+        return min;
+    }
+    public static long max(final Collection<Long> valueList) {
+        long max = valueList.stream().findFirst().get();
+        for (final Long value : valueList) {
+            max = Math.max(max, value);
+        }
+        return max;
     }
     public static long numberFromBinaryString(final String value) {
         return Long.parseLong(value, 2);
