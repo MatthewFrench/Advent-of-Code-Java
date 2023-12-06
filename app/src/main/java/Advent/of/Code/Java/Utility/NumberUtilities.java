@@ -10,6 +10,13 @@ public class NumberUtilities {
         }
         return sum;
     }
+    public static long multiply(final Collection<Long> valueList) {
+        long sum = 1;
+        for (final Long value : valueList) {
+            sum *= value;
+        }
+        return sum;
+    }
     public static long min(final Collection<Long> valueList) {
         long min = valueList.stream().findFirst().get();
         for (final Long value : valueList) {

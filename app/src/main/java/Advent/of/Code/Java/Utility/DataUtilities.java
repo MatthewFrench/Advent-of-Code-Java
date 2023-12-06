@@ -86,4 +86,12 @@ public class DataUtilities {
         }
         return null;
     }
+
+    public static <T1, T2> List<T2> transformData(final List<T1> items, Function<T1, T2> transformFunction) {
+        final List<T2> transformedList = new ArrayList<>();
+        for (final T1 item : items) {
+            transformedList.add(transformFunction.apply(item));
+        }
+        return transformedList;
+    }
 }
