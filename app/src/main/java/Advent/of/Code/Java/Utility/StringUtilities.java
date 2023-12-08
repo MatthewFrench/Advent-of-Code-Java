@@ -11,6 +11,8 @@ import java.util.regex.Pattern;
 
 // Todo: Turn this into a lombok extension so I can reference these functions directly on the relevant types: https://stackoverflow.com/a/50412907
 // Example: "test  test".removeWhitespaceFromString();
+//@ExtensionMethod({java.lang.String, Extensions.class})
+// Note: Giving up on extensions for now, IntelliJ doesn't support autocompleting extension functions: https://youtrack.jetbrains.com/issue/IDEA-261477/Lombok-ExtensionMethod-autocomplete-feature
 public class StringUtilities {
     final static ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 

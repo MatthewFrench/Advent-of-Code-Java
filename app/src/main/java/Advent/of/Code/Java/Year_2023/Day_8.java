@@ -8,7 +8,6 @@ import Advent.of.Code.Java.Utility.NumberUtilities;
 import Advent.of.Code.Java.Utility.StringUtilities;
 import Advent.of.Code.Java.Utility.Structures.DayWithExecute;
 import Advent.of.Code.Java.Utility.Structures.Pair;
-import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.HashMap;

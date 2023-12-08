@@ -17,15 +17,15 @@ repositories {
 }
 
 dependencies {
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.0")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.16.0")
     implementation("org.reflections:reflections:0.10.2")
     implementation("org.slf4j:slf4j-simple:1.7.32")
     implementation("org.javatuples:javatuples:1.2")
-    implementation("org.apache.commons:commons-lang3:3.12.0")
+    implementation("org.apache.commons:commons-lang3:3.14.0")
 
 
-    compileOnly("org.projectlombok:lombok:1.18.22")
-    annotationProcessor("org.projectlombok:lombok:1.18.22")
+    compileOnly("org.projectlombok:lombok:1.18.30")
+    annotationProcessor("org.projectlombok:lombok:1.18.30")
 
     // Use JUnit test framework.
     testImplementation("junit:junit:4.13.2")
@@ -33,7 +33,7 @@ dependencies {
 
 
     // This dependency is used by the application.
-    implementation("com.google.guava:guava:30.1.1-jre")
+    implementation("com.google.guava:guava:32.1.3-jre")
 }
 
 application {
