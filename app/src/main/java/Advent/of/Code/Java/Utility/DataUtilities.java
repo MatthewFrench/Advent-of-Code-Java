@@ -94,4 +94,12 @@ public class DataUtilities {
         }
         return transformedList;
     }
+
+    public static <T> List<T> reverseList(final List<T> targetList) {
+        final List<T> newList = new ArrayList<>();
+        for (int index = targetList.size() - 1; index >= 0; index--) {
+            newList.add(targetList.get(index));
+        }
+        return newList;
+    }
 }
