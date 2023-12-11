@@ -30,7 +30,7 @@ public class Day_11 implements DayWithExecute {
 
     private void runSolution2(final String fileName) throws Exception {
         final List<List<String>> input = DataUtilities.transformData(LoadUtilities.loadTextFileAsList(fileName), s -> StringUtilities.splitStringIntoList(s, ""));
-        // This is off by one, I have no idea why. I made a math mistake somewhere.
+        // Part 2 is replacing the column with 1000000, so subtract one
         LogUtilities.logGreen("Solution 2: " + getSumOfLengths(input, 1000000 - 1));
     }
 
