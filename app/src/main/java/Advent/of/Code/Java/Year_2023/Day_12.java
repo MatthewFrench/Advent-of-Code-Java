@@ -232,14 +232,6 @@ public class Day_12 implements DayWithExecute {
             return false;
         }
 
-        /*
-        // Check total count of valid numbers and see if we can get to that count with current numbers and unknowns
-        final long possibleCount = arrangement.getTotalCount(CharacterType.NUMBER) + arrangement.getTotalCount(CharacterType.UNKNOWN);
-        if (possibleCount < totalValidNumberCount) {
-            //countPossibleCount.addAndGet(1);
-            return false;
-        }
-         */
         public boolean validPossibleCount(final long totalValidNumberCount) {
             CharacterGroup currentSearchGroup = startNode;
             long count = 0;
@@ -376,18 +368,29 @@ public class Day_12 implements DayWithExecute {
                     validPossibilities += 1;
                 }
             } else if (isPartialValid(newArrangement1, expectedNumbers, totalNumberCount)) {
-                possibilities.add(newArrangement1);
+                // If we maxed out on the valid numbers even with unknowns, there are no more possibilities
+                // Valid numbers: 1, 6, 5 - #???.######..#####.
+                if (newArrangement1.numberGroupsMatch(expectedNumbers)) {
+                    validPossibilities += 1;
+                } else {
+                    possibilities.add(newArrangement1);
+                }
             }
             // Avoid a copy by re-using the prior dead arrangement
             final SpringArrangement newArrangement2 = arrangement;
             newArrangement2.replaceNextUnknownWith(CharacterType.NUMBER);
             if (!newArrangement2.hasUnknowns()) {
-                // Todo: I can catch invalid ones here and see what heuristics should have been used before this point
                 if (isValid(newArrangement2, expectedNumbers)) {
                     validPossibilities += 1;
                 }
             } else if (isPartialValid(newArrangement2, expectedNumbers, totalNumberCount)) {
-                possibilities.add(newArrangement2);
+                // If we maxed out on the valid numbers even with unknowns, there are no more possibilities
+                // Valid numbers: 1, 6, 5 - #???.######..#####.
+                if (newArrangement2.numberGroupsMatch(expectedNumbers)) {
+                    validPossibilities += 1;
+                } else {
+                    possibilities.add(newArrangement2);
+                }
             }
         }
         return validPossibilities;
@@ -397,29 +400,18 @@ public class Day_12 implements DayWithExecute {
         return arrangement.numberGroupsMatch(numbers);
     }
 
-    //static AtomicLong countHasValidMaxPossibleNumberGroupCount = new AtomicLong(0);
-    //static AtomicLong countPossibleCount = new AtomicLong(0);
-    //static AtomicLong countNumberCountsUntil = new AtomicLong(0);
-
     private boolean isPartialValid(final SpringArrangement arrangement, final List<Integer> validNumbers, final long totalValidNumberCount) {
-        // Todo: Do another profile and determine best ordering of these elements
-        //int isFalse = 0;
-
         /*
         Need: 1, 3, 1, 6
         Invalid: .#.#.#?#?#?#?#?
         Invalid: .#.#.#.#?
          */
         if (!arrangement.numberGroupsValidUntilUnknown(validNumbers)) {
-            //countNumberCountsUntil.addAndGet(1);
-            //isFalse += 1;
             return false;
         }
 
         // Check total count of valid numbers and see if we can get to that count with current numbers and unknowns
         if (!arrangement.validPossibleCount(totalValidNumberCount)) {
-            //countPossibleCount.addAndGet(1);
-            //isFalse += 1;
             return false;
         }
 
@@ -431,8 +423,6 @@ public class Day_12 implements DayWithExecute {
         // Valid:   ....#??...?##.
         //    Calculate as three groups, valid
         if (!arrangement.hasValidMaxPossibleNumberGroupCount(validNumbers.size())) {
-            //countHasValidMaxPossibleNumberGroupCount.addAndGet(1);
-            //isFalse += 1;
             return false;
         }
 
