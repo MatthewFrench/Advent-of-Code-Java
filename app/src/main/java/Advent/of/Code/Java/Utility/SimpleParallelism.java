@@ -10,8 +10,8 @@ public class SimpleParallelism {
     private final ExecutorService executorService;
     private final List<CompletableFuture<Void>> futures;
 
-    public SimpleParallelism(int parallelCount) {
-        executorService = Executors.newWorkStealingPool(parallelCount);
+    public SimpleParallelism() {
+        executorService = Executors.newCachedThreadPool();
         futures = new ArrayList<>();
     }
     public void add(Runnable runnable) {

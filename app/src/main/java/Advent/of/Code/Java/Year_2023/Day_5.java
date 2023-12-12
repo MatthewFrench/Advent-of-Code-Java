@@ -161,7 +161,7 @@ public class Day_5 implements DayWithExecute {
             Long seedStart = null;
             int seedCount = 0;
             // Parallelize the processing
-            final SimpleParallelism simpleParallelism = new SimpleParallelism(seedValues.size());
+            final SimpleParallelism simpleParallelism = new SimpleParallelism();
 
             for (final String seedValue : seedValues) {
                 LogUtilities.indent();

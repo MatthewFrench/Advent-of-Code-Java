@@ -57,7 +57,7 @@ public class Day_12 implements DayWithExecute {
         AtomicLong possibilities = new AtomicLong();
         AtomicLong count = new AtomicLong();
 
-        final SimpleParallelism simpleParallelism = new SimpleParallelism(input.size());
+        final SimpleParallelism simpleParallelism = new SimpleParallelism();
         for (final String line : input) {
             final List<String> sides = StringUtilities.splitStringIntoList(line, " ");
             final List<Integer> numbers = DataUtilities.transformData(StringUtilities.splitStringIntoList(sides.get(1), ","), Integer::parseInt);
@@ -140,84 +140,122 @@ public class Day_12 implements DayWithExecute {
     class SpringArrangement {
         CharacterGroup startNode;
 
-        public List<Integer> getGroupCountList(final CharacterType characterType) {
+        public boolean numberGroupsMatch(final List<Integer> validNumbers) {
             CharacterGroup currentSearchGroup = startNode;
-            final List<Integer> countList = new ArrayList<>();
+            int index = 0;
             while (currentSearchGroup != null) {
-                if (currentSearchGroup.type == characterType) {
-                    countList.add(currentSearchGroup.count);
+                if (currentSearchGroup.type == CharacterType.NUMBER) {
+                    if (index >= validNumbers.size()) {
+                        return false;
+                    }
+                    if (validNumbers.get(index) != currentSearchGroup.count) {
+                        return false;
+                    }
+                    index += 1;
                 }
                 currentSearchGroup = currentSearchGroup.nextGroup;
             }
-            return countList;
-        }
-
-        public long getNumberOfGroups(final CharacterType characterType) {
-            CharacterGroup currentSearchGroup = startNode;
-            long count = 0;
-            while (currentSearchGroup != null) {
-                if (currentSearchGroup.type == characterType) {
-                    count += 1;
-                }
-                currentSearchGroup = currentSearchGroup.nextGroup;
+            if (index < validNumbers.size()) {
+                return false;
             }
-            return count;
+            return true;
         }
 
-        public List<Integer> getNumberOfGroupCountsUntil(final CharacterType characterType, final CharacterType untilCharacterType) {
+        public boolean numberGroupsValidUntilUnknown(final List<Integer> validNumbers) {
             CharacterGroup currentSearchGroup = startNode;
-            List<Integer> counts = new ArrayList<>();
+            int index = 0;
             while (currentSearchGroup != null) {
-                if (currentSearchGroup.type == characterType) {
-                    counts.add(currentSearchGroup.count);
-                }
-                if (currentSearchGroup.type == untilCharacterType) {
+                if (currentSearchGroup.type == CharacterType.NUMBER) {
+                    if (index >= validNumbers.size()) {
+                        return false;
+                    }
+                    if (currentSearchGroup.nextGroup != null && currentSearchGroup.nextGroup.type == CharacterType.UNKNOWN) {
+                        if (currentSearchGroup.count > validNumbers.get(index)) {
+                            return false;
+                        }
+                        break;
+                    } else {
+                        if (validNumbers.get(index) != currentSearchGroup.count) {
+                            return false;
+                        }
+                    }
+                    index += 1;
+                } else if (currentSearchGroup.type == CharacterType.UNKNOWN) {
                     break;
                 }
                 currentSearchGroup = currentSearchGroup.nextGroup;
             }
-            return counts;
+            return true;
         }
 
-        public List<Integer> getNumberOfGroupCountsBeforeNeighbor(final CharacterType characterType, final CharacterType beforeCharacterType) {
+        // Example: .....??...?##.
+        //    Calculate as two groups
+        // Example: .....#?...?##.
+        //    Calculate as two groups
+        // Example: .....??...???.
+        //    Calculate as three groups
+        // Example: .....??...???#.
+        //    Calculate as three groups
+        // Example:   ....#??...?##.
+        //    Calculate as three groups
+        // Example:   ....#??#...?##.
+        //    Calculate as two groups
+        // Example:   ....#???#...?##.
+        //    Calculate as three groups
+        public boolean hasValidMaxPossibleNumberGroupCount(long validNumberGroupCount) {
+            // We're hard-coding the usage of UNKNOWN and NUMBER
             CharacterGroup currentSearchGroup = startNode;
-            List<Integer> counts = new ArrayList<>();
+            long maxPossibleGroupCount = 0;
             while (currentSearchGroup != null) {
-                if (currentSearchGroup.type == characterType && (currentSearchGroup.nextGroup == null || currentSearchGroup.nextGroup.type != beforeCharacterType)) {
-                    counts.add(currentSearchGroup.count);
-                }
-                if (currentSearchGroup.type == beforeCharacterType) {
-                    break;
+                if (currentSearchGroup.type == CharacterType.NUMBER) {
+                    maxPossibleGroupCount += 1;
+                    if (maxPossibleGroupCount >= validNumberGroupCount) {
+                        return true;
+                    }
+                } else if (currentSearchGroup.type == CharacterType.UNKNOWN) {
+                    boolean numberTouchingLeft = currentSearchGroup.priorGroup != null && currentSearchGroup.priorGroup.type == CharacterType.NUMBER;
+                    boolean numberTouchingRight = currentSearchGroup.nextGroup != null && currentSearchGroup.nextGroup.type == CharacterType.NUMBER;
+                    int unknownCount = currentSearchGroup.count;
+                    if (numberTouchingLeft) {
+                        unknownCount -= 1;
+                    }
+                    if (numberTouchingRight) {
+                        unknownCount -= 1;
+                    }
+                    maxPossibleGroupCount += (long) Math.ceil(((double) Math.max(unknownCount, 0)) / 2);
+                    if (maxPossibleGroupCount >= validNumberGroupCount) {
+                        return true;
+                    }
                 }
                 currentSearchGroup = currentSearchGroup.nextGroup;
             }
-            return counts;
+            return false;
         }
 
-        public long getNumberOfGroupsWithCountGreaterThan(final CharacterType characterType, long greaterThan) {
+        /*
+        // Check total count of valid numbers and see if we can get to that count with current numbers and unknowns
+        final long possibleCount = arrangement.getTotalCount(CharacterType.NUMBER) + arrangement.getTotalCount(CharacterType.UNKNOWN);
+        if (possibleCount < totalValidNumberCount) {
+            //countPossibleCount.addAndGet(1);
+            return false;
+        }
+         */
+        public boolean validPossibleCount(final long totalValidNumberCount) {
             CharacterGroup currentSearchGroup = startNode;
             long count = 0;
             while (currentSearchGroup != null) {
-                if (currentSearchGroup.type == characterType && currentSearchGroup.count > greaterThan) {
-                    count += 1;
-                }
-                currentSearchGroup = currentSearchGroup.nextGroup;
-            }
-            return count;
-        }
-
-        public long getTotalCount(final CharacterType characterType) {
-            CharacterGroup currentSearchGroup = startNode;
-            long count = 0;
-            while (currentSearchGroup != null) {
-                if (currentSearchGroup.type == characterType) {
+                if (currentSearchGroup.type == CharacterType.NUMBER || currentSearchGroup.type == CharacterType.UNKNOWN) {
                     count += currentSearchGroup.count;
+                    if (count >= totalValidNumberCount) {
+                        return true;
+                    }
                 }
                 currentSearchGroup = currentSearchGroup.nextGroup;
             }
-            return count;
+            return count >= totalValidNumberCount;
         }
 
+        // Todo: Potential optimization is cache unknown count
         public boolean hasUnknowns() {
             CharacterGroup currentSearchGroup = startNode;
             while (currentSearchGroup != null) {
@@ -328,6 +366,8 @@ public class Day_12 implements DayWithExecute {
         possibilities.add(startingArrangement);
         long validPossibilities = 0;
         while (!possibilities.isEmpty()) {
+            // Todo: Potential optimization, chop non-UNKNOWN groups from the start and chop expected numbers that were validated
+            // Todo: Optimization, if I'm chopping off the start, I can possibly cache and match possibility counts with expected numbers
             final SpringArrangement arrangement = possibilities.remove(possibilities.size() - 1);
             final SpringArrangement newArrangement1 = arrangement.copy();
             newArrangement1.replaceNextUnknownWith(CharacterType.SEPARATOR);
@@ -338,9 +378,11 @@ public class Day_12 implements DayWithExecute {
             } else if (isPartialValid(newArrangement1, expectedNumbers, totalNumberCount)) {
                 possibilities.add(newArrangement1);
             }
-            final SpringArrangement newArrangement2 = arrangement.copy();
+            // Avoid a copy by re-using the prior dead arrangement
+            final SpringArrangement newArrangement2 = arrangement;
             newArrangement2.replaceNextUnknownWith(CharacterType.NUMBER);
             if (!newArrangement2.hasUnknowns()) {
+                // Todo: I can catch invalid ones here and see what heuristics should have been used before this point
                 if (isValid(newArrangement2, expectedNumbers)) {
                     validPossibilities += 1;
                 }
@@ -352,149 +394,49 @@ public class Day_12 implements DayWithExecute {
     }
 
     private boolean isValid(final SpringArrangement arrangement, final List<Integer> numbers) {
-        final List<Integer> numberGroupCounts = arrangement.getGroupCountList(CharacterType.NUMBER);
-        if (numberGroupCounts.size() != numbers.size()) {
-            return false;
-        }
-        for (int index = 0; index < numbers.size(); index++) {
-            if (numbers.get(index) != numberGroupCounts.get(index)) {
-                return false;
-            }
-        }
-        return true;
+        return arrangement.numberGroupsMatch(numbers);
     }
 
+    //static AtomicLong countHasValidMaxPossibleNumberGroupCount = new AtomicLong(0);
+    //static AtomicLong countPossibleCount = new AtomicLong(0);
+    //static AtomicLong countNumberCountsUntil = new AtomicLong(0);
+
     private boolean isPartialValid(final SpringArrangement arrangement, final List<Integer> validNumbers, final long totalValidNumberCount) {
-        // Check total count of valid numbers and see if we can get to that count with current numbers and unknowns
-        final long possibleCount = arrangement.getTotalCount(CharacterType.NUMBER) + arrangement.getTotalCount(CharacterType.UNKNOWN);
-        if (possibleCount < totalValidNumberCount) {
-            return false;
-        }
-
-        // Remove impossible groupings
-        // Need 3 groups - Invalid: ".??.###", Valid: ".???.###"
-        final long numberGroupCount = arrangement.getNumberOfGroups(CharacterType.NUMBER);
-        final List<Integer> unknownGroupList = arrangement.getGroupCountList(CharacterType.UNKNOWN);
-        long numberOfPotentialUnknownGroups = 0;
-        for (final int unknownGroupCount : unknownGroupList) {
-            numberOfPotentialUnknownGroups += (long) Math.ceil((double) unknownGroupCount / 2);
-        }
-        if (numberGroupCount + numberOfPotentialUnknownGroups < validNumbers.size()) {
-            return false;
-        }
-
-        // Remove where there is too many numbers to start with up until the first unknown
-        // Need number 1, 1, 3 - Invalid: ##?.###, Valid: #.#?
-        final List<Integer> numberCountsUntil = arrangement.getNumberOfGroupCountsUntil(CharacterType.NUMBER, CharacterType.UNKNOWN);
-        if (numberCountsUntil.size() > validNumbers.size()) {
-            return false;
-        }
-        for (int index = 0; index < numberCountsUntil.size(); index++) {
-            if (numberCountsUntil.get(index) > validNumbers.get(index)) {
-                return false;
-            }
-        }
+        // Todo: Do another profile and determine best ordering of these elements
+        //int isFalse = 0;
 
         /*
         Need: 1, 3, 1, 6
         Invalid: .#.#.#?#?#?#?#?
         Invalid: .#.#.#.#?
          */
-        final List<Integer> numberCountsBefore = arrangement.getNumberOfGroupCountsBeforeNeighbor(CharacterType.NUMBER, CharacterType.UNKNOWN);
-        if (numberCountsBefore.size() > validNumbers.size()) {
+        if (!arrangement.numberGroupsValidUntilUnknown(validNumbers)) {
+            //countNumberCountsUntil.addAndGet(1);
+            //isFalse += 1;
             return false;
         }
-        for (int index = 0; index < numberCountsBefore.size(); index++) {
-            if (numberCountsBefore.get(index) < validNumbers.get(index)) {
-                return false;
-            }
+
+        // Check total count of valid numbers and see if we can get to that count with current numbers and unknowns
+        if (!arrangement.validPossibleCount(totalValidNumberCount)) {
+            //countPossibleCount.addAndGet(1);
+            //isFalse += 1;
+            return false;
         }
 
         // Example: Need 1, 1, 3
         // Invalid: .....??...?##.
+        //    Calculate as two groups, not enough groups
         // Invalid: .....#?...?##.
-        // Heuristic for this scenario?
-
-        // Todo: Add heuristics to cut down on partial valid
-        // Todo: Probably could add heuristics for counting total groups and if the number of number groups can be attained
+        //    Calculate as two groups, not enough groups
+        // Valid:   ....#??...?##.
+        //    Calculate as three groups, valid
+        if (!arrangement.hasValidMaxPossibleNumberGroupCount(validNumbers.size())) {
+            //countHasValidMaxPossibleNumberGroupCount.addAndGet(1);
+            //isFalse += 1;
+            return false;
+        }
 
         //final String prettyPrint = arrangement.prettyPrint();
         return true;
     }
-
-    /*
-    private boolean isValid(final SpringArrangement arrangement, final List<Integer> numbers) {
-        if (arrangement.numberCounts.size() < numbers.size() || arrangement.numberCounts.size() > numbers.size() + 1) {
-            return false;
-        }
-        if (arrangement.numberCounts.size() > numbers.size()) {
-            if (arrangement.numberCounts.get(arrangement.numberCounts.size() - 1) != 0) {
-                return false;
-            }
-        }
-        for (int index = 0; index < numbers.size(); index++) {
-            if (numbers.get(index) != arrangement.numberCounts.get(index)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private boolean isPartialValid(final SpringArrangement arrangement, final List<Integer> validNumbers, final long totalValidNumberCount) {
-        final List<Integer> checkNumbers = arrangement.numberCounts;
-        final int checkNumberSize = checkNumbers.size();
-        final int validNumberSize = validNumbers.size();
-        // Check numbers can have an end number of zero since we're still calculating totals
-        boolean endNumberZero = checkNumbers.get(checkNumberSize - 1) == 0;
-        if (checkNumberSize > validNumberSize + (endNumberZero ? 1 : 0)) {
-            return false;
-        }
-        // Check total count of valid numbers and see if we can get to that count with current numbers and unknowns
-        final long possibleCount = arrangement.totalNumberCount + arrangement.questionMarkIndexes.size();
-        if (possibleCount < totalValidNumberCount) {
-            return false;
-        }
-        // Combine question marks that are next to each other to see if we can filter out impossible groupings
-        long possibleAdditionalGroups = 0;
-        {
-            int currentQuestionMarkIndex = arrangement.questionMarkIndexes.get(0);
-            int currentGroupingCount = 1;
-            for (int index = 1; index < arrangement.questionMarkIndexes.size(); index++) {
-                final int nextQuestionMarkIndex = arrangement.questionMarkIndexes.get(index);
-                if (nextQuestionMarkIndex != currentQuestionMarkIndex + 1) {
-                    possibleAdditionalGroups += (long)Math.ceil((double) currentGroupingCount / 2);
-                    currentGroupingCount = 0;
-                }
-                currentGroupingCount += 1;
-                currentQuestionMarkIndex = nextQuestionMarkIndex;
-            }
-            if (currentGroupingCount > 0) {
-                possibleAdditionalGroups += (long)Math.ceil((double) currentGroupingCount / 2);
-            }
-        }
-        final long possibleTotalGroups = possibleAdditionalGroups + checkNumberSize - (endNumberZero ? 1 : 0);
-        if (possibleTotalGroups < validNumberSize) {
-            return false;
-        }
-        final int maxIndex = Math.min(validNumberSize, checkNumberSize - (endNumberZero ? 1 : 0));
-        for (int index = 0; index < maxIndex; index++) {
-            if (index == maxIndex - 1) {
-                if (checkNumbers.get(index) > validNumbers.get(index)) {
-                    return false;
-                }
-            } else {
-                if (checkNumbers.get(index) != validNumbers.get(index)) {
-                    return false;
-                }
-            }
-        }
-
-        // Todo: Add heuristics to cut down on partial valid
-        // Todo: Probably could add heuristics for counting total groups and if the number of number groups can be attained
-
-
-        return true;
-    }
-
-     */
 }
