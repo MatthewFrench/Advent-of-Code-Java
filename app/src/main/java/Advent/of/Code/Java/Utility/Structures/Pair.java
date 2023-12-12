@@ -14,3 +14,7 @@ public class Pair<Key, Value> {
         return new Pair<>(key, value);
     }
 }
+
+// Todo: Make a mutable version of Pair
+// Todo: Make a DimensionPair that is X and Y, and additional dimensions as well
+// Todo: Make Pair for triple, quadruple, and more

@@ -11,6 +11,13 @@ public class NumberUtilities {
         }
         return sum;
     }
+    public static long sumIntegers(final Collection<Integer> valueList) {
+        long sum = 0;
+        for (final int value : valueList) {
+            sum += value;
+        }
+        return sum;
+    }
     public static long multiply(final Collection<Long> valueList) {
         long sum = 1;
         for (final Long value : valueList) {
