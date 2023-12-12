@@ -8,14 +8,14 @@ Repo to hold all advent of code years and days for Java.
 2023: In progress
 
 How to run a day:  
-`gradle run --args "2020 1"`
+`./gradlew run --args "2020 1"`
 
 How to run a year:  
-`gradle run --args "2020"`
+`./gradlew run --args "2020"`
 
 How to run all:  
-`gradle run`
+`./gradlew run`
 
-This uses Java 17 and Java 17 features. Please use the correct SDK or it will not compile.
+This uses Java 17 and Java 17 features. Please use the correct SDK or it will not compile. Java 21 also works.
 
 IntelliJ is the recommended IDE for using with this project.
