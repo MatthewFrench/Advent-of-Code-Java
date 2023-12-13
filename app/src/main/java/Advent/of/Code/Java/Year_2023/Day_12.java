@@ -88,6 +88,8 @@ public class Day_12 implements DayWithExecute {
                 final long calculatedPossibilities = countPossibilities(expandedCharacterGroup, expandedNumbers);
                 possibilities.addAndGet(calculatedPossibilities);
                 count.addAndGet(1);
+                // Todo: Output the line that we calculated for, could give insight
+                // Todo: Write start time and end time of the calculation as well
                 LogUtilities.logPurple("Progress: " + count.get() + " / " + input.size() + " - Calculated: " + NumberUtilities.formatNumber(calculatedPossibilities) + " - " + TimeUtilities.getTimeAsString());
             });
         }
@@ -412,6 +414,24 @@ public class Day_12 implements DayWithExecute {
     }
 
     private long countPossibilities(final CharacterGroup initialCharacterGroup, final List<Integer> originalExpectedNumbers) {
+        // Todo: Another idea for optimizing. I could separate the line on a separator with an even number of question marks on both sides
+        // then I could do every combination of shifting the numbers to the left of the line and to the right of the line. Multiply
+        // the left half and right half solutions and then add the different combinations of shifting. That may product the same number,
+        // but the fact that we're multiplying instead of adding to get the solution count would drastically reduce the number of
+        // computation cycles.
+        /*
+        Example: ?#???#?.?.#?#?#?#??? 2,2,1,7,1
+        Split into: ?#???#?.? and #?#?#?#???
+        Add calculations:
+            [] * [2,2,1,7,1] +
+            [2] * [2,1,7,1] +
+            [2,2] * [1,7,1] +
+            [2,2,1] * [7,1] +
+            [2,2,1,7,1] * []
+            Because this is multiplication, shouldn't this be substantially faster than testing each combo?
+            Instead of calculating 4,000,000,000 combinations, I can calculate 2,000 by 50 times. Insanely faster.
+         */
+
         final long originalTotalNumberCount = NumberUtilities.sumIntegers(originalExpectedNumbers);
         final List<SpringArrangement> possibilities = new ArrayList<>();
         final SpringArrangement startingArrangement = new SpringArrangement();
