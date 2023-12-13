@@ -8,6 +8,7 @@ import Advent.of.Code.Java.Utility.NumberUtilities;
 import Advent.of.Code.Java.Utility.SimpleParallelism;
 import Advent.of.Code.Java.Utility.StringUtilities;
 import Advent.of.Code.Java.Utility.Structures.DayWithExecute;
+import Advent.of.Code.Java.Utility.TimeUtilities;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -84,9 +85,10 @@ public class Day_12 implements DayWithExecute {
             }
             final CharacterGroup expandedCharacterGroup = characterListToGroup(expandedCharacters);
             simpleParallelism.add(() -> {
-                possibilities.addAndGet(countPossibilities(expandedCharacterGroup, expandedNumbers));
+                final long calculatedPossibilities = countPossibilities(expandedCharacterGroup, expandedNumbers);
+                possibilities.addAndGet(calculatedPossibilities);
                 count.addAndGet(1);
-                LogUtilities.logPurple("Progress: " + count.get() + " / " + input.size());
+                LogUtilities.logPurple("Progress: " + count.get() + " / " + input.size() + " - Calculated: " + NumberUtilities.formatNumber(calculatedPossibilities) + " - " + TimeUtilities.getTimeAsString());
             });
         }
         simpleParallelism.waitForCompletion();

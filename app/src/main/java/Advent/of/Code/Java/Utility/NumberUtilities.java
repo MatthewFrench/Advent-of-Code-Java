@@ -1,9 +1,14 @@
 package Advent.of.Code.Java.Utility;
 
+import java.text.NumberFormat;
 import java.util.Collection;
 import java.util.List;
 
 public class NumberUtilities {
+    final static NumberFormat formatter = NumberFormat.getInstance();
+    public static String formatNumber(final Long number) {
+        return formatter.format(number);
+    }
     public static long sum(final Collection<Long> valueList) {
         long sum = 0;
         for (final Long value : valueList) {
