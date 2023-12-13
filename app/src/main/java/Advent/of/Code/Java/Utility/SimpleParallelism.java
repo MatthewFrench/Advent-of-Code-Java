@@ -11,7 +11,9 @@ public class SimpleParallelism {
     private final List<CompletableFuture<Void>> futures;
 
     public SimpleParallelism() {
-        executorService = Executors.newCachedThreadPool();
+        // This assumes that it is better to run one item at a time before grabbing the next, to use the max cpu
+        // and that all the items are calculation heavy.
+        executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         futures = new ArrayList<>();
     }
     public void add(Runnable runnable) {

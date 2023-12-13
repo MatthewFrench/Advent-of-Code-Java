@@ -53,6 +53,7 @@ public class Day_12 implements DayWithExecute {
     }
 
     private void runSolution2(final String fileName) throws Exception {
+        final long initialMilliseconds = TimeUtilities.getCurrentMilliseconds();
         final List<String> input = LoadUtilities.loadTextFileAsList(fileName);
 
         AtomicLong possibilities = new AtomicLong();
@@ -85,12 +86,23 @@ public class Day_12 implements DayWithExecute {
             }
             final CharacterGroup expandedCharacterGroup = characterListToGroup(expandedCharacters);
             simpleParallelism.add(() -> {
+                final long startMilliseconds = TimeUtilities.getCurrentMilliseconds();
                 final long calculatedPossibilities = countPossibilities(expandedCharacterGroup, expandedNumbers);
                 possibilities.addAndGet(calculatedPossibilities);
-                count.addAndGet(1);
+                long completedCount = count.addAndGet(1);
+                final long totalMilliseconds = TimeUtilities.getCurrentMilliseconds() - startMilliseconds;
                 // Todo: Output the line that we calculated for, could give insight
                 // Todo: Write start time and end time of the calculation as well
-                LogUtilities.logPurple("Progress: " + count.get() + " / " + input.size() + " - Calculated: " + NumberUtilities.formatNumber(calculatedPossibilities) + " - " + TimeUtilities.getTimeAsString());
+                long totalExecutionMilliseconds = TimeUtilities.getCurrentMilliseconds() - initialMilliseconds;
+                double millisecondsPerCompletedItem = (double) totalExecutionMilliseconds / completedCount;
+                long itemsLeftToComplete = input.size() - completedCount;
+                double remainingMilliseconds = millisecondsPerCompletedItem * itemsLeftToComplete;
+                LogUtilities.logPurple("Progress: " + completedCount + " / " + input.size()
+                        + " - Calculated: " + NumberUtilities.formatNumber(calculatedPossibilities)
+                        + " - " + TimeUtilities.getMillisecondTimeAsString(totalMilliseconds)
+                        + " - " + TimeUtilities.getTimeAsString()
+                        + " - Estimated remaining time: " + TimeUtilities.getMillisecondTimeAsString((long) remainingMilliseconds)
+                );
             });
         }
         simpleParallelism.waitForCompletion();
@@ -441,7 +453,6 @@ public class Day_12 implements DayWithExecute {
         possibilities.add(startingArrangement);
         long validPossibilities = 0;
         while (!possibilities.isEmpty()) {
-            // Todo: Optimization, if I'm chopping off the start, I can possibly cache and match possibility counts with expected numbers
             final SpringArrangement arrangement = possibilities.removeLast();
             arrangement.trimUnneededNodes();
             final SpringArrangement newArrangement1 = arrangement.copy();
