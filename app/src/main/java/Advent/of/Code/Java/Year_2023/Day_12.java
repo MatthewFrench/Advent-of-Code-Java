@@ -138,6 +138,8 @@ public class Day_12 implements DayWithExecute {
     }
 
     class SpringArrangement {
+        List<Integer> validNumbers;
+        Long totalValidNumberCount;
         CharacterGroup startNode;
 
         public boolean numberGroupsMatch(final List<Integer> validNumbers) {
@@ -259,6 +261,58 @@ public class Day_12 implements DayWithExecute {
             return false;
         }
 
+        public void trimUnneededNodes() {
+            // Example: 1, 1, 3 - #??.### goes to 1, 3 - ?.###
+            CharacterGroup currentSearchGroup = startNode;
+            while (currentSearchGroup != null) {
+                if (currentSearchGroup.type == CharacterType.NUMBER) {
+                    if (validNumbers.size() > 1 && currentSearchGroup.count == validNumbers.getFirst()) {
+                        if (currentSearchGroup.nextGroup != null && currentSearchGroup.nextGroup.type == CharacterType.SEPARATOR) {
+                            validNumbers.removeFirst();
+                            totalValidNumberCount -= currentSearchGroup.count;
+                            removeNode(currentSearchGroup);
+                        } else if (currentSearchGroup.nextGroup != null && currentSearchGroup.nextGroup.type == CharacterType.UNKNOWN) {
+                            // Pull an unknown to be a separator, it is the only choice here
+                            validNumbers.removeFirst();
+                            totalValidNumberCount -= currentSearchGroup.count;
+                            if (currentSearchGroup.nextGroup.count == 1) {
+                                currentSearchGroup.nextGroup.type = CharacterType.SEPARATOR;
+                                removeNode(currentSearchGroup);
+                            } else {
+                                currentSearchGroup.nextGroup.count -= 1;
+                                currentSearchGroup.count = 1;
+                                currentSearchGroup.type = CharacterType.SEPARATOR;
+                            }
+                        } else {
+                            return;
+                        }
+                    } else {
+                        // Todo: May be able to chop off a part of the number, this probably wouldn't optimize anything
+                        return;
+                    }
+                } else if (currentSearchGroup.type == CharacterType.SEPARATOR) {
+                    removeNode(currentSearchGroup);
+                } else {
+                    return;
+                }
+                currentSearchGroup = currentSearchGroup.nextGroup;
+            }
+        }
+
+        private void removeNode(final CharacterGroup node) {
+            final CharacterGroup priorNode = node.priorGroup;
+            final CharacterGroup nextNode = node.nextGroup;
+            if (nextNode != null) {
+                nextNode.priorGroup = priorNode;
+            }
+            if (priorNode != null) {
+                priorNode.nextGroup = nextNode;
+            }
+            if (node == startNode) {
+                startNode = nextNode;
+            }
+        }
+
         public void replaceNextUnknownWith(final CharacterType characterType) {
             CharacterGroup currentSearchGroup = startNode;
             while (currentSearchGroup != null) {
@@ -303,6 +357,9 @@ public class Day_12 implements DayWithExecute {
                                 leftNode.nextGroup = rightNode;
                                 // Collapse current search group into left node
                                 currentSearchGroup = leftNode;
+                                if (leftNode.priorGroup == null) {
+                                    startNode = leftNode;
+                                }
                             }
                         }
                         // Merge the right group into the current group if the right group is the same type
@@ -346,31 +403,35 @@ public class Day_12 implements DayWithExecute {
         public SpringArrangement copy() {
             final SpringArrangement newArrangement = new SpringArrangement();
             newArrangement.startNode = startNode.copy();
+            newArrangement.totalValidNumberCount = totalValidNumberCount;
+            newArrangement.validNumbers = new ArrayList<>(validNumbers);
             return newArrangement;
         }
     }
 
-    private long countPossibilities(final CharacterGroup initialCharacterGroup, final List<Integer> expectedNumbers) {
-        final long totalNumberCount = NumberUtilities.sumIntegers(expectedNumbers);
+    private long countPossibilities(final CharacterGroup initialCharacterGroup, final List<Integer> originalExpectedNumbers) {
+        final long originalTotalNumberCount = NumberUtilities.sumIntegers(originalExpectedNumbers);
         final List<SpringArrangement> possibilities = new ArrayList<>();
         final SpringArrangement startingArrangement = new SpringArrangement();
+        startingArrangement.validNumbers = originalExpectedNumbers;
+        startingArrangement.totalValidNumberCount = originalTotalNumberCount;
         startingArrangement.startNode = initialCharacterGroup.copy();
         possibilities.add(startingArrangement);
         long validPossibilities = 0;
         while (!possibilities.isEmpty()) {
-            // Todo: Potential optimization, chop non-UNKNOWN groups from the start and chop expected numbers that were validated
             // Todo: Optimization, if I'm chopping off the start, I can possibly cache and match possibility counts with expected numbers
-            final SpringArrangement arrangement = possibilities.remove(possibilities.size() - 1);
+            final SpringArrangement arrangement = possibilities.removeLast();
+            arrangement.trimUnneededNodes();
             final SpringArrangement newArrangement1 = arrangement.copy();
             newArrangement1.replaceNextUnknownWith(CharacterType.SEPARATOR);
             if (!newArrangement1.hasUnknowns()) {
-                if (isValid(newArrangement1, expectedNumbers)) {
+                if (isValid(newArrangement1)) {
                     validPossibilities += 1;
                 }
-            } else if (isPartialValid(newArrangement1, expectedNumbers, totalNumberCount)) {
+            } else if (isPartialValid(newArrangement1)) {
                 // If we maxed out on the valid numbers even with unknowns, there are no more possibilities
                 // Valid numbers: 1, 6, 5 - #???.######..#####.
-                if (newArrangement1.numberGroupsMatch(expectedNumbers)) {
+                if (newArrangement1.numberGroupsMatch(newArrangement1.validNumbers)) {
                     validPossibilities += 1;
                 } else {
                     possibilities.add(newArrangement1);
@@ -380,13 +441,13 @@ public class Day_12 implements DayWithExecute {
             final SpringArrangement newArrangement2 = arrangement;
             newArrangement2.replaceNextUnknownWith(CharacterType.NUMBER);
             if (!newArrangement2.hasUnknowns()) {
-                if (isValid(newArrangement2, expectedNumbers)) {
+                if (isValid(newArrangement2)) {
                     validPossibilities += 1;
                 }
-            } else if (isPartialValid(newArrangement2, expectedNumbers, totalNumberCount)) {
+            } else if (isPartialValid(newArrangement2)) {
                 // If we maxed out on the valid numbers even with unknowns, there are no more possibilities
                 // Valid numbers: 1, 6, 5 - #???.######..#####.
-                if (newArrangement2.numberGroupsMatch(expectedNumbers)) {
+                if (newArrangement2.numberGroupsMatch(newArrangement2.validNumbers)) {
                     validPossibilities += 1;
                 } else {
                     possibilities.add(newArrangement2);
@@ -396,11 +457,13 @@ public class Day_12 implements DayWithExecute {
         return validPossibilities;
     }
 
-    private boolean isValid(final SpringArrangement arrangement, final List<Integer> numbers) {
-        return arrangement.numberGroupsMatch(numbers);
+    private boolean isValid(final SpringArrangement arrangement) {
+        return arrangement.numberGroupsMatch(arrangement.validNumbers);
     }
 
-    private boolean isPartialValid(final SpringArrangement arrangement, final List<Integer> validNumbers, final long totalValidNumberCount) {
+    private boolean isPartialValid(final SpringArrangement arrangement) {
+        final List<Integer> validNumbers = arrangement.validNumbers;
+        final long totalValidNumberCount = arrangement.totalValidNumberCount;
         /*
         Need: 1, 3, 1, 6
         Invalid: .#.#.#?#?#?#?#?
