@@ -44,6 +44,13 @@ public class NumberUtilities {
         }
         return max;
     }
+    public static int maxOfIntegers(final Collection<Integer> valueList) {
+        int max = valueList.stream().findFirst().get();
+        for (final int value : valueList) {
+            max = Math.max(max, value);
+        }
+        return max;
+    }
     public static long numberFromBinaryString(final String value) {
         return Long.parseLong(value, 2);
     }

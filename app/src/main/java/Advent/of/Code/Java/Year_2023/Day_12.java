@@ -48,7 +48,7 @@ public class Day_12 implements DayWithExecute {
             final long startMilliseconds = TimeUtilities.getCurrentMilliseconds();
 
 
-            long calculatedPossibilities = countPossibilities(characterListToGroup(characters), numbers);
+            long calculatedPossibilities = countPossibilitiesChopped(characterListToGroup(characters), numbers);
             possibilities += calculatedPossibilities;
             count += 1;
             LogUtilities.logPurple("Progress: " + count + " / " + input.size());
@@ -498,59 +498,97 @@ public class Day_12 implements DayWithExecute {
             Instead of calculating 4,000,000,000 combinations, I can calculate 2,000 by 50 times. Insanely faster.
          */
     private long countPossibilitiesChopped(final CharacterGroup initialCharacterGroup, final List<Integer> originalExpectedNumbers) {
-        final SpringArrangement initialSpringArrangement = new SpringArrangement();
-        initialSpringArrangement.startNode = initialCharacterGroup;
-        final CharacterGroup initialGroupCopy = initialCharacterGroup.copy();
-        // First get the number of unknown groups
-        long totalNumberOfUnknownGroups = 0;
-        CharacterGroup currentCharacterGroup = initialGroupCopy;
-        while (currentCharacterGroup != null) {
-            if (currentCharacterGroup.type == CharacterType.UNKNOWN) {
-                totalNumberOfUnknownGroups += 1;
+        {
+            final SpringArrangement initialSpringArrangement = new SpringArrangement();
+            initialSpringArrangement.startNode = initialCharacterGroup;
+            final CharacterGroup initialGroupCopy = initialCharacterGroup.copy();
+            // First get the number of unknown groups
+            long totalNumberOfUnknownGroups = 0;
+            CharacterGroup currentCharacterGroup = initialGroupCopy;
+            while (currentCharacterGroup != null) {
+                if (currentCharacterGroup.type == CharacterType.UNKNOWN) {
+                    totalNumberOfUnknownGroups += 1;
+                }
+                currentCharacterGroup = currentCharacterGroup.nextGroup;
             }
-            currentCharacterGroup = currentCharacterGroup.nextGroup;
+            // Next find the most center separator group
+            long passedUnknownGroups = 0;
+            CharacterGroup bestSeparatorGroup = null;
+            long distanceFromCenter = 0;
+            currentCharacterGroup = initialGroupCopy;
+            while (currentCharacterGroup != null) {
+                if (currentCharacterGroup.type == CharacterType.UNKNOWN) {
+                    passedUnknownGroups += 1;
+                } else if (currentCharacterGroup.type == CharacterType.SEPARATOR && currentCharacterGroup.priorGroup != null && currentCharacterGroup.nextGroup != null) {
+                    long currentDistanceFromCenter = Math.abs(totalNumberOfUnknownGroups / 2 - passedUnknownGroups);
+                    if (bestSeparatorGroup == null || currentDistanceFromCenter < distanceFromCenter) {
+                        bestSeparatorGroup = currentCharacterGroup;
+                        distanceFromCenter = currentDistanceFromCenter;
+                    }
+                }
+                currentCharacterGroup = currentCharacterGroup.nextGroup;
+            }
+            if (bestSeparatorGroup != null) {
+                // Now split the character groups along the separator group
+                final CharacterGroup firstHalfStart = initialGroupCopy;
+                final CharacterGroup secondHalfStart = bestSeparatorGroup.nextGroup;
+                bestSeparatorGroup.priorGroup.nextGroup = null;
+                secondHalfStart.priorGroup = null;
+                final List<Integer> firstHalfNumbers = new ArrayList<>();
+                final List<Integer> secondHalfNumbers = new ArrayList<>(originalExpectedNumbers);
+                // Todo: Another optimization idea, could start at the center and go left and right on the number groups so I do less count calls
+                // Don't need to continue going left and right when they return 0 results.
+                long totalPossibilities = 0;
+                // Todo: Another potential optimization, I could recursively have this function call itself if the number array is big enough.
+                // Then we can split big items way down as much as needed.
+                totalPossibilities += countPossibilities(firstHalfStart, firstHalfNumbers) * countPossibilities(secondHalfStart, secondHalfNumbers);
+                while (!secondHalfNumbers.isEmpty()) {
+                    firstHalfNumbers.add(secondHalfNumbers.removeFirst());
+                    totalPossibilities += countPossibilities(firstHalfStart, firstHalfNumbers) * countPossibilities(secondHalfStart, secondHalfNumbers);
+                }
+                return totalPossibilities;
+            }
         }
-        // Next find the most center separator group
-        long passedUnknownGroups = 0;
-        CharacterGroup bestSeparatorGroup = null;
-        long distanceFromCenter = 0;
-        currentCharacterGroup = initialGroupCopy;
-        while (currentCharacterGroup != null) {
-            if (currentCharacterGroup.type == CharacterType.UNKNOWN) {
-                passedUnknownGroups += 1;
-            } else if (currentCharacterGroup.type == CharacterType.SEPARATOR) {
-                long currentDistanceFromCenter = Math.abs(totalNumberOfUnknownGroups / 2 - passedUnknownGroups);
-                if (bestSeparatorGroup == null || currentDistanceFromCenter < distanceFromCenter) {
-                    bestSeparatorGroup = currentCharacterGroup;
-                    distanceFromCenter = currentDistanceFromCenter;
+        // Split ?? into .. and #. and .# and ##
+        List<CharacterType> characters = characterGroupToList(initialCharacterGroup);
+        if (characters.size() > Math.max(5, NumberUtilities.maxOfIntegers(originalExpectedNumbers))) {
+            int bestIndex = -1;
+            int bestIndexFromCenter = 0;
+            int midPoint = characters.size() / 2;
+            for (int index = 0; index < characters.size() - 1; index++) {
+                if (characters.get(index) == CharacterType.UNKNOWN && characters.get(index + 1) == CharacterType.UNKNOWN) {
+                    int distanceFromCenter = Math.abs(midPoint - index);
+                    if (bestIndex == -1 || distanceFromCenter < bestIndexFromCenter) {
+                        bestIndex = index;
+                        bestIndexFromCenter = distanceFromCenter;
+                    }
                 }
             }
-            currentCharacterGroup = currentCharacterGroup.nextGroup;
-        }
-        if (bestSeparatorGroup != null) {
-            // Now split the character groups along the separator group
-            final CharacterGroup firstHalfStart = initialGroupCopy;
-            final CharacterGroup secondHalfStart = bestSeparatorGroup.nextGroup;
-            bestSeparatorGroup.priorGroup.nextGroup = null;
-            secondHalfStart.priorGroup = null;
-            final List<Integer> firstHalfNumbers = new ArrayList<>();
-            final List<Integer> secondHalfNumbers = new ArrayList<>(originalExpectedNumbers);
-            // Todo: Another optimization idea, could start at the center and go left and right on the number groups so I do less count calls
-            // Don't need to continue going left and right when they return 0 results.
-            long totalPossibilities = 0;
-            // Todo: Another potential optimization, I could recursively have this function call itself if the number array is big enough.
-            // Then we can split big items way down as much as needed.
-            totalPossibilities += countPossibilities(firstHalfStart, firstHalfNumbers) * countPossibilities(secondHalfStart, secondHalfNumbers);
-            while (!secondHalfNumbers.isEmpty()) {
-                firstHalfNumbers.add(secondHalfNumbers.removeFirst());
-                totalPossibilities += countPossibilities(firstHalfStart, firstHalfNumbers) * countPossibilities(secondHalfStart, secondHalfNumbers);
+            if (bestIndex != -1) {
+                List<List<CharacterType>> listsToCount = new ArrayList<>();
+                final List<CharacterType> doubleSeparator = new ArrayList<>(characters);
+                doubleSeparator.set(bestIndex, CharacterType.SEPARATOR);
+                doubleSeparator.set(bestIndex + 1, CharacterType.SEPARATOR);
+                listsToCount.add(doubleSeparator);
+                final List<CharacterType> leftNumber = new ArrayList<>(characters);
+                leftNumber.set(bestIndex, CharacterType.NUMBER);
+                leftNumber.set(bestIndex + 1, CharacterType.SEPARATOR);
+                listsToCount.add(leftNumber);
+                final List<CharacterType> rightNumber = new ArrayList<>(characters);
+                rightNumber.set(bestIndex, CharacterType.SEPARATOR);
+                rightNumber.set(bestIndex + 1, CharacterType.NUMBER);
+                listsToCount.add(rightNumber);
+                final List<CharacterType> doubleNumber = new ArrayList<>(characters);
+                doubleNumber.set(bestIndex, CharacterType.NUMBER);
+                doubleNumber.set(bestIndex + 1, CharacterType.NUMBER);
+                listsToCount.add(doubleNumber);
+                long totalPossibilities = 0;
+                for (final List<CharacterType> characterList : listsToCount) {
+                    totalPossibilities += countPossibilitiesChopped(characterListToGroup(characterList), originalExpectedNumbers);
+                }
+                return totalPossibilities;
             }
-            return totalPossibilities;
         }
-        // Todo: Another optimization idea for no separator, I make two version, on a middle question mark
-        // add a separator and add a number. Then do a split count on the one with the separator and normal count
-        // on the one with the number. Then add results together.
-        // Split ?? into .. and #. and .#
         return countPossibilities(initialCharacterGroup, originalExpectedNumbers);
     }
 
