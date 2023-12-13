@@ -62,7 +62,7 @@ public class Day_12 implements DayWithExecute {
         AtomicLong possibilities = new AtomicLong();
         AtomicLong count = new AtomicLong();
 
-        final SimpleParallelism simpleParallelism = new SimpleParallelism();
+        final SimpleParallelism simpleParallelism = new SimpleParallelism(input.size());
         for (final String line : input) {
             final List<String> sides = StringUtilities.splitStringIntoList(line, " ");
             final List<Integer> numbers = DataUtilities.transformData(StringUtilities.splitStringIntoList(sides.get(1), ","), Integer::parseInt);
@@ -507,7 +507,7 @@ public class Day_12 implements DayWithExecute {
         startingArrangement.totalValidNumberCount = originalTotalNumberCount;
         startingArrangement.startNode = initialCharacterGroup.copy();
         possibilities.add(startingArrangement);
-        final String startingArrangementString = startingArrangement.prettyPrint();
+        //final String startingArrangementString = startingArrangement.prettyPrint();
         long validPossibilities = 0;
         while (!possibilities.isEmpty()) {
             final SpringArrangement arrangement = possibilities.removeLast();

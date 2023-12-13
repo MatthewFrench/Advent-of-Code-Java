@@ -16,6 +16,10 @@ public class SimpleParallelism {
         executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         futures = new ArrayList<>();
     }
+    public SimpleParallelism(final int specifiedParallelism) {
+        executorService = Executors.newWorkStealingPool(specifiedParallelism);
+        futures = new ArrayList<>();
+    }
     public void add(Runnable runnable) {
         futures.add(CompletableFuture.runAsync(runnable, executorService));
     }
