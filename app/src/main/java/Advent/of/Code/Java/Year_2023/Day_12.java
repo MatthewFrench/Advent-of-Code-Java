@@ -11,6 +11,7 @@ import Advent.of.Code.Java.Utility.Structures.DayWithExecute;
 import Advent.of.Code.Java.Utility.TimeUtilities;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -55,6 +56,8 @@ public class Day_12 implements DayWithExecute {
     private void runSolution2(final String fileName) throws Exception {
         final long initialMilliseconds = TimeUtilities.getCurrentMilliseconds();
         final List<String> input = LoadUtilities.loadTextFileAsList(fileName);
+        // Sort the input randomly so that we get a better estimate on time as we do calculations
+        Collections.shuffle(input);
 
         AtomicLong possibilities = new AtomicLong();
         AtomicLong count = new AtomicLong();
@@ -85,23 +88,23 @@ public class Day_12 implements DayWithExecute {
                 expandedCharacters.addAll(characters);
             }
             final CharacterGroup expandedCharacterGroup = characterListToGroup(expandedCharacters);
+
             simpleParallelism.add(() -> {
                 final long startMilliseconds = TimeUtilities.getCurrentMilliseconds();
-                final long calculatedPossibilities = countPossibilities(expandedCharacterGroup, expandedNumbers);
+                final long calculatedPossibilities = countPossibilitiesChopped(expandedCharacterGroup, expandedNumbers);
                 possibilities.addAndGet(calculatedPossibilities);
                 long completedCount = count.addAndGet(1);
                 final long totalMilliseconds = TimeUtilities.getCurrentMilliseconds() - startMilliseconds;
-                // Todo: Output the line that we calculated for, could give insight
-                // Todo: Write start time and end time of the calculation as well
                 long totalExecutionMilliseconds = TimeUtilities.getCurrentMilliseconds() - initialMilliseconds;
                 double millisecondsPerCompletedItem = (double) totalExecutionMilliseconds / completedCount;
                 long itemsLeftToComplete = input.size() - completedCount;
                 double remainingMilliseconds = millisecondsPerCompletedItem * itemsLeftToComplete;
-                LogUtilities.logPurple("Progress: " + completedCount + " / " + input.size()
+                LogUtilities.logPurple(TimeUtilities.getTimeAsString()
+                        + "  Progress: " + completedCount + " / " + input.size()
                         + " - Calculated: " + NumberUtilities.formatNumber(calculatedPossibilities)
                         + " - " + TimeUtilities.getMillisecondTimeAsString(totalMilliseconds)
-                        + " - " + TimeUtilities.getTimeAsString()
                         + " - Estimated remaining time: " + TimeUtilities.getMillisecondTimeAsString((long) remainingMilliseconds)
+                        + " - " + line
                 );
             });
         }
@@ -425,12 +428,12 @@ public class Day_12 implements DayWithExecute {
         }
     }
 
-    private long countPossibilities(final CharacterGroup initialCharacterGroup, final List<Integer> originalExpectedNumbers) {
-        // Todo: Another idea for optimizing. I could separate the line on a separator with an even number of question marks on both sides
-        // then I could do every combination of shifting the numbers to the left of the line and to the right of the line. Multiply
-        // the left half and right half solutions and then add the different combinations of shifting. That may product the same number,
-        // but the fact that we're multiplying instead of adding to get the solution count would drastically reduce the number of
-        // computation cycles.
+
+    // Todo: Another idea for optimizing. I could separate the line on a separator with an even number of question marks on both sides
+    // then I could do every combination of shifting the numbers to the left of the line and to the right of the line. Multiply
+    // the left half and right half solutions and then add the different combinations of shifting. That may product the same number,
+    // but the fact that we're multiplying instead of adding to get the solution count would drastically reduce the number of
+    // computation cycles.
         /*
         Example: ?#???#?.?.#?#?#?#??? 2,2,1,7,1
         Split into: ?#???#?.? and #?#?#?#???
@@ -443,14 +446,68 @@ public class Day_12 implements DayWithExecute {
             Because this is multiplication, shouldn't this be substantially faster than testing each combo?
             Instead of calculating 4,000,000,000 combinations, I can calculate 2,000 by 50 times. Insanely faster.
          */
+    private long countPossibilitiesChopped(final CharacterGroup initialCharacterGroup, final List<Integer> originalExpectedNumbers) {
+        final SpringArrangement initialSpringArrangement = new SpringArrangement();
+        initialSpringArrangement.startNode = initialCharacterGroup;
+        final CharacterGroup initialGroupCopy = initialCharacterGroup.copy();
+        // First get the number of unknown groups
+        long totalNumberOfUnknownGroups = 0;
+        CharacterGroup currentCharacterGroup = initialGroupCopy;
+        while (currentCharacterGroup != null) {
+            if (currentCharacterGroup.type == CharacterType.UNKNOWN) {
+                totalNumberOfUnknownGroups += 1;
+            }
+            currentCharacterGroup = currentCharacterGroup.nextGroup;
+        }
+        // Next find the most center separator group
+        long passedUnknownGroups = 0;
+        CharacterGroup bestSeparatorGroup = null;
+        long distanceFromCenter = 0;
+        currentCharacterGroup = initialGroupCopy;
+        while (currentCharacterGroup != null) {
+            if (currentCharacterGroup.type == CharacterType.UNKNOWN) {
+                passedUnknownGroups += 1;
+            } else if (currentCharacterGroup.type == CharacterType.SEPARATOR) {
+                long currentDistanceFromCenter = Math.abs(totalNumberOfUnknownGroups / 2 - passedUnknownGroups);
+                if (bestSeparatorGroup == null || currentDistanceFromCenter < distanceFromCenter) {
+                    bestSeparatorGroup = currentCharacterGroup;
+                    distanceFromCenter = currentDistanceFromCenter;
+                }
+            }
+            currentCharacterGroup = currentCharacterGroup.nextGroup;
+        }
+        if (bestSeparatorGroup != null) {
+            // Now split the character groups along the separator group
+            final CharacterGroup firstHalfStart = initialGroupCopy;
+            final CharacterGroup secondHalfStart = bestSeparatorGroup.nextGroup;
+            bestSeparatorGroup.priorGroup.nextGroup = null;
+            secondHalfStart.priorGroup = null;
+            final List<Integer> firstHalfNumbers = new ArrayList<>();
+            final List<Integer> secondHalfNumbers = new ArrayList<>(originalExpectedNumbers);
+            // Todo: Another optimization idea, could start at the center and go left and right on the number groups so I do less count calls
+            // Don't need to continue going left and right when they return 0 results.
+            long totalPossibilities = 0;
+            // Todo: Another potential optimization, I could recursively have this function call itself if the number array is big enough.
+            // Then we can split big items way down as much as needed.
+            totalPossibilities += countPossibilities(firstHalfStart, firstHalfNumbers) * countPossibilities(secondHalfStart, secondHalfNumbers);
+            while (!secondHalfNumbers.isEmpty()) {
+                firstHalfNumbers.add(secondHalfNumbers.removeFirst());
+                totalPossibilities += countPossibilities(firstHalfStart, firstHalfNumbers) * countPossibilities(secondHalfStart, secondHalfNumbers);
+            }
+            return totalPossibilities;
+        }
+        return countPossibilities(initialCharacterGroup, originalExpectedNumbers);
+    }
 
+    private long countPossibilities(final CharacterGroup initialCharacterGroup, final List<Integer> originalExpectedNumbers) {
         final long originalTotalNumberCount = NumberUtilities.sumIntegers(originalExpectedNumbers);
         final List<SpringArrangement> possibilities = new ArrayList<>();
         final SpringArrangement startingArrangement = new SpringArrangement();
-        startingArrangement.validNumbers = originalExpectedNumbers;
+        startingArrangement.validNumbers = new ArrayList<>(originalExpectedNumbers);
         startingArrangement.totalValidNumberCount = originalTotalNumberCount;
         startingArrangement.startNode = initialCharacterGroup.copy();
         possibilities.add(startingArrangement);
+        final String startingArrangementString = startingArrangement.prettyPrint();
         long validPossibilities = 0;
         while (!possibilities.isEmpty()) {
             final SpringArrangement arrangement = possibilities.removeLast();
@@ -487,6 +544,7 @@ public class Day_12 implements DayWithExecute {
                 }
             }
         }
+        //LogUtilities.logPurple(validPossibilities + " possibilities for " + startingArrangementString + " - " + StringUtilities.numberListToString(originalExpectedNumbers));
         return validPossibilities;
     }
 

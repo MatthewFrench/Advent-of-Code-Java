@@ -6,8 +6,10 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 // Todo: Turn this into a lombok extension so I can reference these functions directly on the relevant types: https://stackoverflow.com/a/50412907
 // Example: "test  test".removeWhitespaceFromString();
@@ -114,5 +116,9 @@ public class StringUtilities {
             }
         }
         return foundValue;
+    }
+
+    public static String numberListToString(Collection<Integer> numbers) {
+        return numbers.stream().map(Object::toString).collect(Collectors.joining(", "));
     }
 }
