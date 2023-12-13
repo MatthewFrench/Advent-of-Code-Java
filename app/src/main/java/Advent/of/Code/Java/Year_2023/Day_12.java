@@ -45,9 +45,21 @@ public class Day_12 implements DayWithExecute {
                 }
                 return null;
             });
-            possibilities += countPossibilities(characterListToGroup(characters), numbers);
+            final long startMilliseconds = TimeUtilities.getCurrentMilliseconds();
+
+
+            long calculatedPossibilities = countPossibilities(characterListToGroup(characters), numbers);
+            possibilities += calculatedPossibilities;
             count += 1;
             LogUtilities.logPurple("Progress: " + count + " / " + input.size());
+
+            final long totalMilliseconds = TimeUtilities.getCurrentMilliseconds() - startMilliseconds;
+            LogUtilities.logPurple(TimeUtilities.getTimeAsString()
+                    + "  Progress: " + count + " / " + input.size()
+                    + " - Calculated: " + NumberUtilities.formatNumber(calculatedPossibilities)
+                    + " - " + TimeUtilities.getMillisecondTimeAsString(totalMilliseconds)
+                    + " - " + line
+            );
         }
 
         LogUtilities.logGreen("Solution 1: " + possibilities);
@@ -115,7 +127,7 @@ public class Day_12 implements DayWithExecute {
 
     private CharacterGroup characterListToGroup(final List<CharacterType> characters) {
         final CharacterGroup startingNode = new CharacterGroup();
-        startingNode.type = characters.get(0);
+        startingNode.type = characters.getFirst();
         startingNode.count = 0;
         CharacterGroup currentNode = startingNode;
         for (final CharacterType type : characters) {
@@ -130,6 +142,17 @@ public class Day_12 implements DayWithExecute {
             currentNode.count += 1;
         }
         return startingNode;
+    }
+    private List<CharacterType> characterGroupToList(final CharacterGroup characterGroup) {
+        final List<CharacterType> characterList = new ArrayList<>();
+        CharacterGroup currentNode = characterGroup;
+        while (currentNode != null) {
+            for (int index = 0; index < currentNode.count; index++) {
+                characterList.add(currentNode.type);
+            }
+            currentNode = currentNode.nextGroup;
+        }
+        return characterList;
     }
 
     enum CharacterType {
@@ -159,6 +182,11 @@ public class Day_12 implements DayWithExecute {
     class SpringArrangement {
         List<Integer> validNumbers;
         Long totalValidNumberCount;
+        // Total number of characters in the arrangement
+        long totalCharacterCount;
+        // Total number of number characters in the arrangement
+        long totalNumberCharacterCount;
+        long totalUnknownCharacterCount;
         CharacterGroup startNode;
 
         public boolean numberGroupsMatch(final List<Integer> validNumbers) {
@@ -268,16 +296,26 @@ public class Day_12 implements DayWithExecute {
             return count >= totalValidNumberCount;
         }
 
-        // Todo: Potential optimization is cache unknown count
-        public boolean hasUnknowns() {
+        public long calculateCharacterCount(final CharacterType characterType) {
             CharacterGroup currentSearchGroup = startNode;
+            long count = 0;
             while (currentSearchGroup != null) {
-                if (currentSearchGroup.type == CharacterType.UNKNOWN) {
-                    return true;
+                if (currentSearchGroup.type == characterType) {
+                    count += currentSearchGroup.count;
                 }
                 currentSearchGroup = currentSearchGroup.nextGroup;
             }
-            return false;
+            return count;
+        }
+
+        public long calculateCharacterCount() {
+            CharacterGroup currentSearchGroup = startNode;
+            long count = 0;
+            while (currentSearchGroup != null) {
+                count += currentSearchGroup.count;
+                currentSearchGroup = currentSearchGroup.nextGroup;
+            }
+            return count;
         }
 
         public void trimUnneededNodes() {
@@ -290,14 +328,20 @@ public class Day_12 implements DayWithExecute {
                             validNumbers.removeFirst();
                             totalValidNumberCount -= currentSearchGroup.count;
                             removeNode(currentSearchGroup);
+                            totalNumberCharacterCount -= currentSearchGroup.count;
+                            totalCharacterCount -= currentSearchGroup.count;
                         } else if (currentSearchGroup.nextGroup != null && currentSearchGroup.nextGroup.type == CharacterType.UNKNOWN) {
                             // Pull an unknown to be a separator, it is the only choice here
                             validNumbers.removeFirst();
                             totalValidNumberCount -= currentSearchGroup.count;
+                            totalNumberCharacterCount -= currentSearchGroup.count;
+                            totalCharacterCount -= currentSearchGroup.count;
                             if (currentSearchGroup.nextGroup.count == 1) {
                                 currentSearchGroup.nextGroup.type = CharacterType.SEPARATOR;
+                                totalUnknownCharacterCount -= 1;
                                 removeNode(currentSearchGroup);
                             } else {
+                                totalUnknownCharacterCount -= 1;
                                 currentSearchGroup.nextGroup.count -= 1;
                                 currentSearchGroup.count = 1;
                                 currentSearchGroup.type = CharacterType.SEPARATOR;
@@ -306,10 +350,10 @@ public class Day_12 implements DayWithExecute {
                             return;
                         }
                     } else {
-                        // Todo: May be able to chop off a part of the number, this probably wouldn't optimize anything
                         return;
                     }
                 } else if (currentSearchGroup.type == CharacterType.SEPARATOR) {
+                    totalCharacterCount -= currentSearchGroup.count;
                     removeNode(currentSearchGroup);
                 } else {
                     return;
@@ -393,6 +437,10 @@ public class Day_12 implements DayWithExecute {
                             }
                         }
                     }
+                    totalUnknownCharacterCount -= 1;
+                    if (characterType == CharacterType.NUMBER) {
+                        totalNumberCharacterCount += 1;
+                    }
                     return;
                 }
                 currentSearchGroup = currentSearchGroup.nextGroup;
@@ -424,12 +472,15 @@ public class Day_12 implements DayWithExecute {
             newArrangement.startNode = startNode.copy();
             newArrangement.totalValidNumberCount = totalValidNumberCount;
             newArrangement.validNumbers = new ArrayList<>(validNumbers);
+            newArrangement.totalCharacterCount = totalCharacterCount;
+            newArrangement.totalNumberCharacterCount = totalNumberCharacterCount;
+            newArrangement.totalUnknownCharacterCount = totalUnknownCharacterCount;
             return newArrangement;
         }
     }
 
 
-    // Todo: Another idea for optimizing. I could separate the line on a separator with an even number of question marks on both sides
+    // Optimization: I could separate the line on a separator with an even number of question marks on both sides
     // then I could do every combination of shifting the numbers to the left of the line and to the right of the line. Multiply
     // the left half and right half solutions and then add the different combinations of shifting. That may product the same number,
     // but the fact that we're multiplying instead of adding to get the solution count would drastically reduce the number of
@@ -496,6 +547,10 @@ public class Day_12 implements DayWithExecute {
             }
             return totalPossibilities;
         }
+        // Todo: Another optimization idea for no separator, I make two version, on a middle question mark
+        // add a separator and add a number. Then do a split count on the one with the separator and normal count
+        // on the one with the number. Then add results together.
+        // Split ?? into .. and #. and .#
         return countPossibilities(initialCharacterGroup, originalExpectedNumbers);
     }
 
@@ -506,15 +561,30 @@ public class Day_12 implements DayWithExecute {
         startingArrangement.validNumbers = new ArrayList<>(originalExpectedNumbers);
         startingArrangement.totalValidNumberCount = originalTotalNumberCount;
         startingArrangement.startNode = initialCharacterGroup.copy();
+        startingArrangement.totalCharacterCount = startingArrangement.calculateCharacterCount();
+        startingArrangement.totalNumberCharacterCount = startingArrangement.calculateCharacterCount(CharacterType.NUMBER);
+        startingArrangement.totalUnknownCharacterCount = startingArrangement.calculateCharacterCount(CharacterType.UNKNOWN);
         possibilities.add(startingArrangement);
         //final String startingArrangementString = startingArrangement.prettyPrint();
         long validPossibilities = 0;
+        long currentMilliseconds = TimeUtilities.getCurrentMilliseconds();
         while (!possibilities.isEmpty()) {
+            long nowMilliseconds = TimeUtilities.getCurrentMilliseconds();
+            if (nowMilliseconds - currentMilliseconds > 20000) {
+                LogUtilities.logBlue("Probabilities so far: " + NumberUtilities.formatNumber(validPossibilities) + ", in array: " + possibilities.size());
+                currentMilliseconds = nowMilliseconds;
+            }
             final SpringArrangement arrangement = possibilities.removeLast();
+            // Temporarily removing optimization to see full results
             arrangement.trimUnneededNodes();
-            final SpringArrangement newArrangement1 = arrangement.copy();
+            if (arrangement.totalCharacterCount < arrangement.totalValidNumberCount + (arrangement.validNumbers.size() - 1)) {
+                continue;
+            }
+            boolean shouldAddNumber = arrangement.totalNumberCharacterCount < arrangement.totalValidNumberCount;
+
+            final SpringArrangement newArrangement1 = !shouldAddNumber ? arrangement : arrangement.copy();
             newArrangement1.replaceNextUnknownWith(CharacterType.SEPARATOR);
-            if (!newArrangement1.hasUnknowns()) {
+            if (newArrangement1.totalUnknownCharacterCount == 0) {
                 if (isValid(newArrangement1)) {
                     validPossibilities += 1;
                 }
@@ -527,24 +597,25 @@ public class Day_12 implements DayWithExecute {
                     possibilities.add(newArrangement1);
                 }
             }
-            // Avoid a copy by re-using the prior dead arrangement
-            final SpringArrangement newArrangement2 = arrangement;
-            newArrangement2.replaceNextUnknownWith(CharacterType.NUMBER);
-            if (!newArrangement2.hasUnknowns()) {
-                if (isValid(newArrangement2)) {
-                    validPossibilities += 1;
-                }
-            } else if (isPartialValid(newArrangement2)) {
-                // If we maxed out on the valid numbers even with unknowns, there are no more possibilities
-                // Valid numbers: 1, 6, 5 - #???.######..#####.
-                if (newArrangement2.numberGroupsMatch(newArrangement2.validNumbers)) {
-                    validPossibilities += 1;
-                } else {
-                    possibilities.add(newArrangement2);
+            if (shouldAddNumber) {
+                // Avoid a copy by re-using the prior dead arrangement
+                final SpringArrangement newArrangement2 = arrangement;
+                newArrangement2.replaceNextUnknownWith(CharacterType.NUMBER);
+                if (newArrangement2.totalUnknownCharacterCount == 0) {
+                    if (isValid(newArrangement2)) {
+                        validPossibilities += 1;
+                    }
+                } else if (isPartialValid(newArrangement2)) {
+                    // If we maxed out on the valid numbers even with unknowns, there are no more possibilities
+                    // Valid numbers: 1, 6, 5 - #???.######..#####.
+                    if (newArrangement2.numberGroupsMatch(newArrangement2.validNumbers)) {
+                        validPossibilities += 1;
+                    } else {
+                        possibilities.add(newArrangement2);
+                    }
                 }
             }
         }
-        //LogUtilities.logPurple(validPossibilities + " possibilities for " + startingArrangementString + " - " + StringUtilities.numberListToString(originalExpectedNumbers));
         return validPossibilities;
     }
 
@@ -580,7 +651,6 @@ public class Day_12 implements DayWithExecute {
             return false;
         }
 
-        //final String prettyPrint = arrangement.prettyPrint();
         return true;
     }
 }
