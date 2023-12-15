@@ -81,6 +81,12 @@ public class StringUtilities {
     public static String removeEndChunk(final String target, final String chunk) {
         return getStringChunk(target, 0, target.length() - chunk.length());
     }
+    public static String removeEndChunkIfExists(final String target, final String chunk) {
+        if (chunkExistsAtEnd(target, chunk)) {
+            return getStringChunk(target, 0, target.length() - chunk.length());
+        }
+        return target;
+    }
     public static String removeStartChunk(final String target, final String chunk) {
         return getStringChunk(target, chunk.length(), target.length() - chunk.length());
     }
