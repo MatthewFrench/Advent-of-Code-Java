@@ -92,9 +92,10 @@ public class Day_17 implements DayWithExecute {
             }
         }
         // 865 is too high
-        //leastHeatLoss = Math.min(865, leastHeatLoss);
+        leastHeatLoss = Math.min(865, leastHeatLoss);
+        boolean depthFirst = false;
         while (!possibilities.isEmpty()) {
-            final CurrentPossibility possibility = possibilities.removeLast();
+            final CurrentPossibility possibility = depthFirst ? possibilities.removeLast() : possibilities.removeFirst();
             //final Quadruple<Integer, Integer, Direction, Integer> gridMinimumKey = new Quadruple<>(possibility.x, possibility.y, possibility.direction, possibility.currentDirectionCount);
             //long gridMinimumCount = -1;
             /*
