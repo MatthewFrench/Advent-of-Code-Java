@@ -5,6 +5,7 @@ import Advent.of.Code.Java.Utility.LoadUtilities;
 import Advent.of.Code.Java.Utility.LogUtilities;
 import Advent.of.Code.Java.Utility.StringUtilities;
 import Advent.of.Code.Java.Utility.Structures.DayWithExecute;
+import Advent.of.Code.Java.Utility.Structures.Pair;
 import Advent.of.Code.Java.Utility.Structures.Quadruple;
 
 import java.util.Comparator;
@@ -18,7 +19,7 @@ public class Day_17 implements DayWithExecute {
     }
 
     public void executeWithInput(final String fileName) throws Exception {
-        runSolution1(fileName);
+        //runSolution1(fileName);
         runSolution2(fileName);
     }
 
@@ -47,7 +48,7 @@ public class Day_17 implements DayWithExecute {
         Direction direction;
         int currentDirectionCount = 0;
         //Set<Pair<Integer, Integer>> visited;
-        //List<Pair<Integer, Integer>> path;
+        List<Pair<Integer, Integer>> path;
     }
 
     private void runSolution1(final String fileName) throws Exception {
@@ -62,13 +63,23 @@ public class Day_17 implements DayWithExecute {
     private long getLeastHeatLoss(final Integer[][] grid, final int minimumTravelCount, final int maxTravelCount) {
         final int width = grid.length;
         final int height = grid[0].length;
-        final HashMap<Quadruple<Integer, Integer, Direction, Integer>, Long> gridMinimumCounts = new HashMap<Quadruple<Integer, Integer, Direction, Integer>, Long>();
+        final HashMap<Quadruple<Integer, Integer, Direction, Integer>, Long> gridMinimumCounts = new HashMap<>();
 
         final PriorityQueue<CurrentPossibility> possibilities = new PriorityQueue<>(Comparator.comparingLong(value -> value.heatLoss));
         {
             final CurrentPossibility startingPossibility = new CurrentPossibility();
             startingPossibility.heatLoss = 0;
             startingPossibility.direction = Direction.DOWN;
+            startingPossibility.currentDirectionCount = 0;
+            startingPossibility.x = 0;
+            startingPossibility.y = 0;
+            //startingPossibility.visited = new HashSet<>();
+            possibilities.add(startingPossibility);
+        }
+        {
+            final CurrentPossibility startingPossibility = new CurrentPossibility();
+            startingPossibility.heatLoss = 0;
+            startingPossibility.direction = Direction.RIGHT;
             startingPossibility.currentDirectionCount = 0;
             startingPossibility.x = 0;
             startingPossibility.y = 0;
@@ -97,12 +108,14 @@ public class Day_17 implements DayWithExecute {
             final Quadruple<Integer, Integer, Direction, Integer> gridMinimumKey = new Quadruple<>(possibility.x, possibility.y, possibility.direction, possibility.currentDirectionCount);
             long gridMinimumCount = -1;
 
-            if (!gridMinimumCounts.containsKey(gridMinimumKey)) {
-                gridMinimumCounts.put(gridMinimumKey, possibility.heatLoss);
-            } else {
-                gridMinimumCount = gridMinimumCounts.get(gridMinimumKey);
-                if (possibility.heatLoss < gridMinimumCount) {
+            if (possibility.heatLoss != 0) {
+                if (!gridMinimumCounts.containsKey(gridMinimumKey)) {
                     gridMinimumCounts.put(gridMinimumKey, possibility.heatLoss);
+                } else {
+                    gridMinimumCount = gridMinimumCounts.get(gridMinimumKey);
+                    if (possibility.heatLoss < gridMinimumCount) {
+                        gridMinimumCounts.put(gridMinimumKey, possibility.heatLoss);
+                    }
                 }
             }
             if (possibility.x == width - 1 && possibility.y == height - 1 && possibility.currentDirectionCount >= minimumTravelCount) {
@@ -120,9 +133,8 @@ public class Day_17 implements DayWithExecute {
             }
             // Create path left
             if (possibility.direction != Direction.RIGHT
-                    && (possibility.direction != Direction.LEFT || possibility.currentDirectionCount < maxTravelCount)
                     && possibility.x > 0
-                    && (possibility.direction == Direction.LEFT || possibility.currentDirectionCount >= minimumTravelCount)
+                    && ((possibility.direction != Direction.LEFT && possibility.currentDirectionCount >= minimumTravelCount) || (possibility.direction == Direction.LEFT && possibility.currentDirectionCount < maxTravelCount))
                 //&& !possibility.visited.contains(new Pair<>(possibility.x - 1, possibility.y))
             ) {
                 final CurrentPossibility newPossibility = new CurrentPossibility();
@@ -141,9 +153,8 @@ public class Day_17 implements DayWithExecute {
             }
             // Create path up
             if (possibility.direction != Direction.DOWN
-                    && (possibility.direction != Direction.UP || possibility.currentDirectionCount < maxTravelCount)
                     && possibility.y > 0
-                    && (possibility.direction == Direction.UP || possibility.currentDirectionCount >= minimumTravelCount)
+                    && ((possibility.direction != Direction.UP && possibility.currentDirectionCount >= minimumTravelCount) || (possibility.direction == Direction.UP && possibility.currentDirectionCount < maxTravelCount))
                 //&& !possibility.visited.contains(new Pair<>(possibility.x, possibility.y - 1))
             ) {
                 final CurrentPossibility newPossibility = new CurrentPossibility();
@@ -162,9 +173,8 @@ public class Day_17 implements DayWithExecute {
             }
             // Create path right
             if (possibility.direction != Direction.LEFT
-                    && (possibility.direction != Direction.RIGHT || possibility.currentDirectionCount < maxTravelCount)
                     && possibility.x < width - 1
-                    && (possibility.direction == Direction.RIGHT || possibility.currentDirectionCount >= minimumTravelCount)
+                    && ((possibility.direction != Direction.RIGHT && possibility.currentDirectionCount >= minimumTravelCount) || (possibility.direction == Direction.RIGHT && possibility.currentDirectionCount < maxTravelCount))
                 //&& !possibility.visited.contains(new Pair<>(possibility.x + 1, possibility.y))
             ) {
                 final CurrentPossibility newPossibility = new CurrentPossibility();
@@ -183,9 +193,8 @@ public class Day_17 implements DayWithExecute {
             }
             // Create path down
             if (possibility.direction != Direction.UP
-                    && (possibility.direction != Direction.DOWN || possibility.currentDirectionCount < maxTravelCount)
                     && possibility.y < height - 1
-                    && (possibility.direction == Direction.DOWN || possibility.currentDirectionCount >= minimumTravelCount)
+                    && ((possibility.direction != Direction.DOWN && possibility.currentDirectionCount >= minimumTravelCount) || (possibility.direction == Direction.DOWN && possibility.currentDirectionCount < maxTravelCount))
                 //&& !possibility.visited.contains(new Pair<>(possibility.x, possibility.y + 1))
             ) {
                 final CurrentPossibility newPossibility = new CurrentPossibility();
