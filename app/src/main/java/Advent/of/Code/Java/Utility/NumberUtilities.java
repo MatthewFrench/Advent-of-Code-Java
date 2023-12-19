@@ -1,5 +1,7 @@
 package Advent.of.Code.Java.Utility;
 
+import Advent.of.Code.Java.Utility.Structures.Pair;
+
 import java.text.NumberFormat;
 import java.util.Collection;
 import java.util.List;
@@ -100,5 +102,32 @@ public class NumberUtilities {
     {
         // the lcm is simply (a * b) divided by the gcf of the two
         return (a * b) / greatestCommonFactor(a, b);
+    }
+
+    // This was pulled from https://stackoverflow.com/questions/25987465/computing-area-of-a-polygon-in-java
+    public double areaOfPolygon(final List<Pair<Long, Long>> vertices)
+    {
+        double sum = 0;
+        for (int i = 0; i < vertices.size() ; i++)
+        {
+            if (i == 0)
+            {
+                //System.out.println(vertices.get(i).getKey() + "x" + (vertices.get(i + 1).y + "-" + vertices.get(vertices.size() - 1).y));
+                sum += vertices.get(i).getKey() * (vertices.get(i + 1).getValue() - vertices.get(vertices.size() - 1).getValue());
+            }
+            else if (i == vertices.size() - 1)
+            {
+                //System.out.println(vertices.get(i).getKey() + "x" + (vertices.get(0).y + "-" + vertices.get(i - 1).y));
+                sum += vertices.get(i).getKey() * (vertices.get(0).getValue() - vertices.get(i - 1).getValue());
+            }
+            else
+            {
+                //System.out.println(vertices.get(i).x + "x" + (vertices.get(i + 1).y + "-" + vertices.get(i - 1).y));
+                sum += vertices.get(i).getKey() * (vertices.get(i + 1).getValue() - vertices.get(i - 1).getValue());
+            }
+        }
+
+        double area = 0.5 * Math.abs(sum);
+        return area;
     }
 }
