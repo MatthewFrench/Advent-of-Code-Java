@@ -1,11 +1,12 @@
 package Advent.of.Code.Java.Year_2023;
 
+import Advent.of.Code.Java.Utility.DataUtilities;
 import Advent.of.Code.Java.Utility.DayUtilities;
 import Advent.of.Code.Java.Utility.LoadUtilities;
 import Advent.of.Code.Java.Utility.LogUtilities;
+import Advent.of.Code.Java.Utility.NumberUtilities;
 import Advent.of.Code.Java.Utility.StringUtilities;
 import Advent.of.Code.Java.Utility.Structures.DayWithExecute;
-import lombok.SneakyThrows;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -45,8 +46,8 @@ public class Day_20 implements DayWithExecute {
                 conjunctionState.put(input, false);
             }
         }
-        @SneakyThrows
-        public void activate(final boolean state, final String fromInput, final Map<String, Module> moduleMap, final long index) {
+        public List<Action> activate(final boolean state, final String fromInput, final Map<String, Module> moduleMap, final long index) {
+            final List<Action> newActions = new ArrayList<>();
             if (type == ModuleType.BROADCASTER) {
                 for (final String output : outputs) {
                     if (state) {
@@ -55,12 +56,12 @@ public class Day_20 implements DayWithExecute {
                         sentLow += 1;
                     }
                     if (moduleMap.containsKey(output)) {
-                        moduleMap.get(output).activate(state, name, moduleMap, index);
-                    } else {
-                        //LogUtilities.logPurple(state + " to " + output);
-                        if (!state) {
-                            throw new Exception("RX");
-                        }
+                        final Action action = new Action();
+                        action.index = index;
+                        action.signal = state;
+                        action.fromModule = name;
+                        action.toModule = output;
+                        newActions.add(action);
                     }
                 }
             } else if (type == ModuleType.FLIPFLOP) {
@@ -73,12 +74,12 @@ public class Day_20 implements DayWithExecute {
                             sentLow += 1;
                         }
                         if (moduleMap.containsKey(output)) {
-                            moduleMap.get(output).activate(flipFlopState, name, moduleMap, index);
-                        } else {
-                            //LogUtilities.logPurple(flipFlopState + " to " + output);
-                            if (!flipFlopState) {
-                                throw new Exception("RX");
-                            }
+                            final Action action = new Action();
+                            action.index = index;
+                            action.signal = flipFlopState;
+                            action.fromModule = name;
+                            action.toModule = output;
+                            newActions.add(action);
                         }
                     }
                 }
@@ -99,26 +100,27 @@ public class Day_20 implements DayWithExecute {
                         sentLow += 1;
                     }
                     if (moduleMap.containsKey(output)) {
-                        if (toSend && output.equals("kc")) {
-                            LogUtilities.logPurple(name + " to " + output + " -> " + index);
-                        }
-                        moduleMap.get(output).activate(toSend, name, moduleMap, index);
-                    } else {
-                        //LogUtilities.logPurple(toSend + " to " + output);
-                        if (!toSend) {
-                            throw new Exception("RX");
-                        }
+                        final Action action = new Action();
+                        action.index = index;
+                        action.signal = toSend;
+                        action.fromModule = name;
+                        action.toModule = output;
+                        newActions.add(action);
                     }
                 }
             }
+            return newActions;
         }
     }
 
-    private void runSolution1(final String fileName) throws Exception {
-        if (fileName.contains("sample")) {
-            return;
-        }
-        final List<String> input = LoadUtilities.loadTextFileAsList(fileName);
+    class Action {
+        String fromModule;
+        String toModule;
+        boolean signal;
+        long index;
+    }
+
+    private Map<String, Module> getModuleMap(final List<String> input) {
         final Map<String, Module> moduleMap = new HashMap<>();
         for (final String line : input) {
             final List<String> halves = StringUtilities.splitStringIntoList(line, " -> ");
@@ -144,18 +146,32 @@ public class Day_20 implements DayWithExecute {
                 }
             }
         }
+        return moduleMap;
+    }
+
+    private void runSolution1(final String fileName) throws Exception {
+        final List<String> input = LoadUtilities.loadTextFileAsList(fileName);
+        final Map<String, Module> moduleMap = getModuleMap(input);
         for (final Module module : moduleMap.values()) {
             module.initialize();
         }
 
+        final ArrayList<Action> actions = new ArrayList<>();
         int count = 1000;
         long lowCount = 0;
         long highCount = 0;
-        long index = 0;
-        while (index > -1) {
+        for (int index = 1; index <= count; index++) {
             lowCount += 1;
-            index += 1;
-            moduleMap.get("broadcaster").activate(false, "button", moduleMap, index);
+            final Action startingAction = new Action();
+            startingAction.fromModule = "button";
+            startingAction.toModule = "broadcaster";
+            startingAction.index = index;
+            startingAction.signal = false;
+            actions.add(startingAction);
+            while (!actions.isEmpty()) {
+                final Action action = actions.removeFirst();
+                actions.addAll(moduleMap.get(action.toModule).activate(action.signal, action.fromModule, moduleMap, action.index));
+            }
         }
         for (final Module module : moduleMap.values()) {
             lowCount += module.sentLow;
@@ -168,5 +184,47 @@ public class Day_20 implements DayWithExecute {
     }
 
     private void runSolution2(final String fileName) throws Exception {
+        if (fileName.contains("sample")) {
+            return;
+        }
+        final List<String> input = LoadUtilities.loadTextFileAsList(fileName);
+        final Map<String, Module> moduleMap = getModuleMap(input);
+        for (final Module module : moduleMap.values()) {
+            module.initialize();
+        }
+
+        final ArrayList<Action> actions = new ArrayList<>();
+        int count = 1_000_000;
+        Long vn = null;
+        Long ph = null;
+        Long hn = null;
+        Long kt = null;
+        for (int index = 1; index <= count; index++) {
+            final Action startingAction = new Action();
+            startingAction.fromModule = "button";
+            startingAction.toModule = "broadcaster";
+            startingAction.index = index;
+            startingAction.signal = false;
+            actions.add(startingAction);
+            while (!actions.isEmpty()) {
+                final Action action = actions.removeFirst();
+                if (action.toModule.equals("kc") && action.signal) {
+                    if (action.fromModule.equals("vn") && vn == null) {
+                        vn = action.index;
+                    }
+                    if (action.fromModule.equals("ph") && ph == null) {
+                        ph = action.index;
+                    }
+                    if (action.fromModule.equals("hn") && hn == null) {
+                        hn = action.index;
+                    }
+                    if (action.fromModule.equals("kt") && kt == null) {
+                        kt = action.index;
+                    }
+                }
+                actions.addAll(moduleMap.get(action.toModule).activate(action.signal, action.fromModule, moduleMap, action.index));
+            }
+        }
+        LogUtilities.logGreen("Solution 2: " + NumberUtilities.getLowestCommonMultiple(DataUtilities.List(vn, ph, hn, kt)));
     }
 }
