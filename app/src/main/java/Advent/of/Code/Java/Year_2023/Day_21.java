@@ -60,36 +60,34 @@ public class Day_21 implements DayWithExecute {
                         if (x > 0 && !grid[x - 1][y] && (reachDistance[x - 1][y] == -1 || reachDistance[x - 1][y] > distanceAway + 1)) {
                             reachDistance[x - 1][y] = distanceAway + 1;
                             isChanging = true;
+                        } else if (x <= 0 && !grid[(x - 1) + width][y] && (reachDistance[(x - 1) + width][y] == -1 || reachDistance[(x - 1) + width][y] > distanceAway + 1)) {
+                            reachDistance[(x - 1) + width][y] = distanceAway + 1;
+                            isChanging = true;
                         }
                         if (y > 0 && !grid[x][y - 1] && (reachDistance[x][y - 1] == -1 || reachDistance[x][y - 1] > distanceAway + 1)) {
                             reachDistance[x][y - 1] = distanceAway + 1;
+                            isChanging = true;
+                        } else if (y <= 0 && !grid[x][(y - 1) + height] && (reachDistance[x][(y - 1) + height] == -1 || reachDistance[x][(y - 1) + height] > distanceAway + 1)) {
+                            reachDistance[x][(y - 1) + height] = distanceAway + 1;
                             isChanging = true;
                         }
                         if (x < width - 1 && !grid[x + 1][y] && (reachDistance[x + 1][y] == -1 || reachDistance[x + 1][y] > distanceAway + 1)) {
                             reachDistance[x + 1][y] = distanceAway + 1;
                             isChanging = true;
+                        } else if (x >= width - 1 && !grid[(x + 1) - width][y] && (reachDistance[(x + 1) - width][y] == -1 || reachDistance[(x + 1) - width][y] > distanceAway + 1)) {
+                            reachDistance[(x + 1) - width][y] = distanceAway + 1;
+                            isChanging = true;
                         }
                         if (y < height - 1 && !grid[x][y + 1] && (reachDistance[x][y + 1] == -1 || reachDistance[x][y + 1] > distanceAway + 1)) {
                             reachDistance[x][y + 1] = distanceAway + 1;
+                            isChanging = true;
+                        } else if (y >= height - 1 && !grid[x][(y + 1) - height] && (reachDistance[x][(y + 1) - height] == -1 || reachDistance[x][(y + 1) - height] > distanceAway + 1)) {
+                            reachDistance[x][(y + 1) - height] = distanceAway + 1;
                             isChanging = true;
                         }
                     }
                 }
             }
-        }
-
-        for (int y = 0; y < height; y++) {
-            String row = "";
-            for (int x = 0; x < width; x++) {
-                if (grid[x][y]) {
-                    row += "#";
-                } else if (reachDistance[x][y] != -1) {
-                    row += "0";
-                } else {
-                    row += ".";
-                }
-            }
-            LogUtilities.logPurple(row);
         }
 
         long steppableCount = 0;
@@ -109,6 +107,7 @@ public class Day_21 implements DayWithExecute {
     }
 
     private void runSolution2(final String fileName) throws Exception {
-
+        final List<String> input = LoadUtilities.loadTextFileAsList(fileName);
+        LogUtilities.logGreen("Solution 2: " + getReachableGardenPlots(input, fileName.contains("sample") ? 50 : 26501365));
     }
 }
